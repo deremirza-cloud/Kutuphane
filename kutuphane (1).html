@@ -1,0 +1,3751 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Okul Kütüphanesi</title>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jsqr/1.4.0/jsQR.min.js"></script>
+<script>
+function openDrawer() {
+  document.getElementById('mainDrawer').classList.add('open');
+  document.getElementById('drawerOverlay').classList.add('open');
+}
+function closeDrawer() {
+  document.getElementById('mainDrawer').classList.remove('open');
+  document.getElementById('drawerOverlay').classList.remove('open');
+}
+function openInfoModal(id) {
+  closeDrawer();
+  document.getElementById('modal-' + id).classList.add('open');
+  if (id === 'settings') openSettingsModal();
+  history.pushState({ level: 1 }, '');
+}
+function closeInfoModal(id) {
+  document.getElementById('modal-' + id).classList.remove('open');
+}
+</script>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root {
+  --fs-title: 15px;
+  --fs-sub: 12px;
+  --fs-item: 14px;
+  --fs-stat: 18px;
+  --fs-folder: 15px;
+  --primary: #1b4332;
+  --primary-light: #3a8a64;
+  --accent: #d4a017;
+  --accent2: #40916c;
+  --danger: #c0392b;
+  --bg: #f5f0e8;
+  --card: #ffffff;
+  --text: #1b2e1f;
+  --text2: #52735c;
+  --border: #d8e4d0;
+  --clr-header: #4a7c8e;
+  --clr-bg: #ffffff;
+  --clr-item: #222222;
+  --clr-sub: #888888;
+  --shadow: 0 2px 12px rgba(27,67,50,0.10);
+  --shadow-lg: 0 8px 32px rgba(27,67,50,0.18);
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body {
+  font-family: 'Nunito', sans-serif;
+  background-color: var(--clr-bg, #ffffff);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='60' height='60' viewBox='0 0 60 60'%3E%3Cg fill='%231b4332' fill-opacity='0.045'%3E%3Ccircle cx='7' cy='7' r='1.5'/%3E%3Ccircle cx='37' cy='22' r='1'/%3E%3Ccircle cx='52' cy='45' r='1.5'/%3E%3Ccircle cx='18' cy='48' r='1'/%3E%3Ccircle cx='45' cy='8' r='1'/%3E%3Ccircle cx='28' cy='35' r='1.5'/%3E%3C/g%3E%3C/svg%3E");
+  background-size: 60px 60px;
+  color: var(--text);
+  min-height: 100vh;
+  max-width: 480px;
+  margin: 0 auto;
+}
+
+/* ── HEADER ── */
+.header {
+  background: var(--clr-header, #4a7c8e);
+  color: white;
+  padding: 20px 20px 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  border-bottom: none;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.18);
+}
+.hamburger-btn {
+  position: absolute; left: 16px; top: 50%; transform: translateY(-50%);
+  background: rgba(255,255,255,0.18); border: none; border-radius: 10px;
+  width: 38px; height: 38px; display: flex; flex-direction: column;
+  align-items: center; justify-content: center; gap: 5px; cursor: pointer; padding: 0;
+}
+.hamburger-btn span { display: block; width: 20px; height: 2.5px; background: white; border-radius: 2px; }
+.drawer-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.4); z-index:200; }
+.drawer-overlay.open { display:block; }
+.drawer {
+  position:fixed; top:0; left:50%; width:280px; height:100%;
+  background:#ffffff; z-index:201; transition:transform 0.3s cubic-bezier(0.4,0,0.2,1);
+  display:flex; flex-direction:column; box-shadow:4px 0 24px rgba(0,0,0,0.18);
+  transform:translateX(calc(-50vw - 280px));
+  max-width:280px;
+}
+@media (max-width:480px) {
+  .drawer { left:0; transform:translateX(-105%); }
+  .drawer.open { transform:translateX(0); }
+}
+@media (min-width:481px) {
+  .drawer { left:calc(50% - 240px); transform:translateX(-105%); }
+  .drawer.open { transform:translateX(0); }
+}
+.drawer-header { background:var(--clr-header, #4a7c8e); padding:40px 20px 20px; display:flex; align-items:center; gap:14px; }
+.drawer-header-icon { width:48px; height:48px; background:rgba(255,255,255,0.2); border-radius:14px; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+.drawer-header-text { color:white; }
+.drawer-header-text .dht-name { font-size:16px; font-weight:800; }
+.drawer-header-text .dht-sub { font-size:11px; opacity:0.85; margin-top:2px; }
+.drawer-body { flex:1; padding:12px 0; overflow-y:auto; }
+.drawer-item { display:flex; align-items:center; gap:14px; padding:14px 20px; cursor:pointer; border-bottom:1px solid rgba(0,0,0,0.06); transition:background 0.15s; }
+.drawer-item:active { background:rgba(0,0,0,0.05); }
+.drawer-item-icon { width:40px; height:40px; border-radius:11px; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+.drawer-item-label { font-size:14px; font-weight:700; color:#1a1a1a; }
+.drawer-item-sub { font-size:12px; color:#888; margin-top:2px; }
+.drawer-footer { padding:14px 20px; font-size:11px; color:#aaa; text-align:center; border-top:1px solid rgba(0,0,0,0.08); }
+.info-modal { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.45); z-index:300; align-items:flex-end; justify-content:center; }
+.info-modal.open { display:flex; }
+.info-modal-box { background:#ffffff; border-radius:20px 20px 0 0; width:100%; max-width:480px; padding:24px 20px 40px; max-height:80vh; overflow-y:auto; }
+.info-modal-title { font-size:18px; font-weight:800; color:#1b4332; margin-bottom:16px; display:flex; align-items:center; gap:10px; }
+.info-modal-close { margin-left:auto; background:#eeeae1; border:none; border-radius:8px; width:32px; height:32px; font-size:18px; cursor:pointer; color:#555; display:flex; align-items:center; justify-content:center; }
+.info-row { display:flex; align-items:center; gap:12px; padding:12px 0; border-bottom:1px solid rgba(0,0,0,0.07); }
+.info-row-icon { width:38px; height:38px; border-radius:10px; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+.info-row-text { flex:1; min-width:0; }
+.info-row-text .irt-label { font-size:12px; color:#888; }
+.info-row-text .irt-val { font-size:14px; font-weight:700; color:#1a1a1a; margin-top:2px; }
+.header-title {
+  font-family: 'Nunito', sans-serif;
+  font-size: 30px;
+  font-weight: 900;
+  font-style: normal;
+  cursor: pointer;
+  text-align: center;
+  letter-spacing: 0.3px;
+  text-transform: none;
+  user-select: none;
+  -webkit-user-select: none;
+  color: #ffffff;
+  text-shadow: 0 2px 8px rgba(0,0,0,0.35);
+  line-height: 1.1;
+}
+.header-title span { font-size: 13px; display:block; font-weight:600; font-style:normal; font-family:'Nunito',sans-serif; letter-spacing:1.5px; text-transform:uppercase; margin-top:4px; color: rgba(255,255,255,0.9); }
+#schoolNameDisplay { font-size: 19px !important; font-weight: 900 !important; letter-spacing: 0.3px !important; text-transform: none !important; color: #ffffff !important; margin-top: 0 !important; }
+
+/* ── BOTTOM NAV ── */
+.folder-body {
+  overflow: hidden;
+  transition: height 0.35s ease, opacity 0.3s ease;
+}
+.folder-arrow {
+  font-size: 20px;
+  color: #1b4332;
+  transition: transform 0.3s ease;
+  display: inline-block;
+  order: 3;
+  margin-left: 8px;
+  flex-shrink: 0;
+}
+.folder-arrow.open { transform: rotate(90deg); }
+.bottom-nav {
+  position: fixed;
+  bottom: 0; left: 50%;
+  transform: translateX(-50%);
+  width: 100%; max-width: 480px;
+  background: #ffffff;
+  display: flex;
+  z-index: 50;
+  padding-top: 12px;
+  height: 76px;
+  align-items: flex-end;
+  border-top: 2.5px solid #3a8a64;
+}
+.nav-btn {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  padding: 6px 0 10px;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: none;
+  background: none;
+  color: #1b4332;
+  font-family: 'Nunito', sans-serif;
+  position: relative;
+}
+.nav-btn.active { color: #1b4332; }
+.nav-btn .nav-icon {
+  display:flex; align-items:center; justify-content:center;
+  width: 58px; height: 44px;
+  border-radius: 12px;
+  transition: all 0.22s cubic-bezier(0.34,1.56,0.64,1);
+  opacity: 1;
+  filter: saturate(1);
+  margin-bottom: 2px;
+}
+.nav-btn.active .nav-icon {
+  transform: none;
+  box-shadow: none;
+}
+.nav-btn.active::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 28px;
+  height: 3.5px;
+  border-radius: 3px 3px 0 0;
+  background: #1b4332;
+}
+.nav-btn .nav-label { font-size: 12px; font-weight: 800; color: #1a1a1a; }
+.nav-badge {
+  background: var(--danger);
+  color: white;
+  font-size: 9px;
+  font-weight: 700;
+  border-radius: 10px;
+  padding: 1px 5px;
+  position: absolute;
+  top: 6px;
+  margin-left: 14px;
+}
+
+/* ── PAGES ── */
+.page { display: none; padding: 16px 16px 90px; animation: fadeIn 0.25s ease; }
+.page.active { display: block; }
+@keyframes fadeIn { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:translateY(0)} }
+
+/* ── FOLDER ACCORDION ── */
+.folder-body {
+  overflow: hidden;
+  transition: height 0.35s cubic-bezier(0.4,0,0.2,1), opacity 0.3s ease;
+  opacity: 0;
+  height: 0;
+}
+.folder-arrow {
+  font-size: 20px;
+  color: #1b4332;
+  transition: transform 0.35s cubic-bezier(0.4,0,0.2,1);
+  display: inline-block;
+  order: 3;
+  margin-left: 8px;
+  flex-shrink: 0;
+}
+.folder-arrow.open { transform: rotate(90deg); }
+
+/* ── STAT SECTIONS ── */
+.stat-section-card {
+  background: #ffffff;
+  border-radius: 16px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+  margin-bottom: 12px;
+  padding: 14px 16px;
+  cursor: pointer;
+  border: 1px solid #b7d4b0;
+}
+.stat-section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-weight: 700;
+  font-size: 14px;
+  color: var(--primary);
+}
+.stat-preview {
+  margin-top: 10px;
+}
+.stat-number-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 14px;
+}
+.stat-number-row:last-child { border-bottom: none; }
+.stat-number-label { color: var(--text2); }
+.stat-number-value { font-weight: 700; font-size: var(--fs-stat, 18px); color: var(--primary); }
+.stat-number-value.danger { color: var(--danger); }
+.slide-page {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; max-width: 480px;
+  height: 100vh;
+  background-color: var(--clr-bg, #ffffff);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='60' height='60' viewBox='0 0 60 60'%3E%3Cg fill='%231b4332' fill-opacity='0.045'%3E%3Ccircle cx='7' cy='7' r='1.5'/%3E%3Ccircle cx='37' cy='22' r='1'/%3E%3Ccircle cx='52' cy='45' r='1.5'/%3E%3Ccircle cx='18' cy='48' r='1'/%3E%3Ccircle cx='45' cy='8' r='1'/%3E%3Ccircle cx='28' cy='35' r='1.5'/%3E%3C/g%3E%3C/svg%3E");
+  background-size: 60px 60px;
+  z-index: 40;
+  overflow-y: auto;
+  padding: 16px 16px 90px;
+  transform: translateX(100%);
+  transition: transform 0.32s cubic-bezier(0.4,0,0.2,1);
+  display: block !important;
+}
+.slide-page.slide-in { transform: translateX(0); }
+
+/* ── BACK BUTTON ── */
+.back-btn {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: rgba(27,67,50,0.12);
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  color: var(--primary);
+  cursor: pointer;
+  transition: background 0.18s, transform 0.18s;
+  flex-shrink: 0;
+}
+.back-btn:hover { background: rgba(27,67,50,0.22); transform: scale(1.08); }
+.back-btn:active { transform: scale(0.94); }
+
+/* ── CARDS ── */
+.card {
+  background: #ffffff;
+  border-radius: 16px;
+  margin-bottom: 6px;
+  overflow: hidden;
+  border: 1px solid #b7d4b0;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+}
+/* Sınıf klasör kartları için yeşil gradient kenarlık */
+.class-folder-card {
+  background: #ffffff;
+  border-radius: 16px;
+  margin-bottom: 6px;
+  overflow: hidden;
+  position: relative;
+  border: 1px solid rgba(0,0,0,0.07);
+  border-left: 3px solid rgba(27,67,50,0.35);
+  box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+}
+/* Action sheet */
+.action-sheet-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(10,20,40,0.45);
+  z-index: 300;
+  align-items: flex-end;
+  justify-content: center;
+}
+.action-sheet-overlay.open { display: flex; }
+.action-sheet {
+  background: #ffffff;
+  border-radius: 20px 20px 0 0;
+  width: 100%; max-width: 480px;
+  padding: 16px 16px 32px;
+}
+.action-sheet-title {
+  font-size: 13px;
+  color: var(--text2);
+  text-align: center;
+  margin-bottom: 14px;
+  font-weight: 600;
+}
+.action-sheet-btn {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  padding: 14px 16px;
+  border: none;
+  background: none;
+  font-family: 'Nunito', sans-serif;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  border-radius: 12px;
+  margin-bottom: 4px;
+  text-align: left;
+  transition: background 0.15s;
+}
+.action-sheet-btn:hover { background: var(--bg); }
+.action-sheet-btn.danger { color: var(--danger); }
+.action-sheet-cancel {
+  display: block;
+  width: 100%;
+  padding: 13px;
+  border: none;
+  background: var(--bg);
+  border-radius: 12px;
+  font-family: 'Nunito', sans-serif;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text2);
+  cursor: pointer;
+  margin-top: 8px;
+}
+.card-header {
+  padding: 14px 16px 10px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--border);
+}
+.card-title {
+  font-family: 'Merriweather', serif;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--primary);
+}
+.card-body { padding: 14px 16px; }
+
+/* ── BUTTONS ── */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 9px 16px;
+  border-radius: 10px;
+  border: none;
+  font-family: 'Nunito', sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.18s;
+}
+.btn-primary { background: var(--primary-light); color: white; }
+.btn-primary:hover { background: var(--primary); }
+.btn-accent { background: var(--accent); color: white; }
+.btn-accent:hover { background: #c88a10; }
+.btn-success { background: var(--accent2); color: white; }
+.btn-danger { background: var(--danger); color: white; }
+.btn-ghost { background: var(--bg); color: var(--text); border: 1px solid var(--border); }
+.btn-sm { padding: 5px 10px; font-size: 12px; border-radius: 7px; }
+.btn-full { width: 100%; justify-content: center; }
+
+/* ── INPUTS ── */
+.form-group { margin-bottom: 12px; }
+.form-label { font-size: 11px; font-weight: 700; color: #2d6a4f; margin-bottom: 6px; display: block; text-transform: uppercase; letter-spacing: 0.8px; }
+.form-input {
+  width: 100%;
+  padding: 11px 14px;
+  border: 1.5px solid #c8dbc0;
+  border-radius: 10px;
+  font-family: 'Nunito', sans-serif;
+  font-size: 15px;
+  color: #1b2e1f;
+  background: #eeeae1;
+  transition: border 0.2s, background 0.2s;
+}
+.form-input:focus { outline: none; border-color: #2d6a4f; background: #e8e3d8; }
+.form-select {
+  width: 100%;
+  padding: 11px 14px;
+  border: 1.5px solid #c8dbc0;
+  border-radius: 10px;
+  font-family: 'Nunito', sans-serif;
+  font-size: 15px;
+  color: #1b2e1f;
+  background: #eeeae1;
+}
+
+/* ── LIST ITEMS ── */
+.list-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 3px 16px;
+  border-bottom: 1px solid rgba(0,0,0,0.06);
+  transition: background 0.15s;
+  background: #ffffff;
+}
+.list-item:last-child { border-bottom: none; }
+.list-item:active { background: #ede8df; }
+.item-icon {
+  width: 32px; height: 32px;
+  border-radius: 9px;
+  display: flex; align-items: center; justify-content: center;
+  margin-right: 12px;
+  margin-left: 0;
+  flex-shrink: 0;
+  order: 1;
+}
+.item-info { flex: 1; min-width: 0; order: 2; }
+.item-title { font-weight: 500; font-size: var(--fs-item, 14px); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--clr-item, #222); }
+.item-sub { font-size: var(--fs-sub, 12px); color: var(--clr-sub, #888); margin-top: 3px; }
+.item-actions { display: flex; gap: 6px; flex-shrink: 0; }
+
+/* ── BADGES ── */
+.badge {
+  display: inline-block;
+  padding: 3px 9px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 700;
+}
+.badge-blue { background: #dbeafe; color: #1e40af; }
+.badge-green { background: #dcfce7; color: #1b4332; }
+.badge-red { background: #fee2e2; color: #991b1b; }
+.badge-orange { background: #fef3c7; color: #1b4332; }
+
+/* ── MODAL ── */
+.modal-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(10,20,40,0.55);
+  z-index: 200;
+  align-items: flex-end;
+  justify-content: center;
+}
+.modal-overlay.open { display: flex; }
+.modal {
+  background: #ffffff;
+  border-radius: 20px 20px 0 0;
+  width: 100%; max-width: 480px;
+  max-height: 90vh;
+  overflow-y: auto;
+  padding: 20px;
+  animation: slideUp 0.28s ease;
+}
+.modal-center {
+  border-radius: 18px;
+  max-height: 80vh;
+  margin: auto;
+  width: calc(100% - 32px);
+}
+@keyframes slideUp { from{transform:translateY(100%)} to{transform:translateY(0)} }
+.modal-title {
+  font-family: 'Nunito', sans-serif;
+  font-size: 17px;
+  font-weight: 800;
+  color: #1b4332;
+  margin-bottom: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.modal-close { cursor: pointer; font-size: 20px; color: var(--text2); background: none; border: none; }
+
+/* ── QR CENTER BUTTON ── */
+.qr-center-btn {
+  position: absolute;
+  bottom: 6px;
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  background: linear-gradient(180deg, #40916c 0%, #1b4332 100%);
+  border: 3px solid white;
+  box-shadow: 0 4px 0 #143d26, 0 6px 16px rgba(27,67,50,0.4);
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  transition: transform 0.18s, box-shadow 0.18s;
+  z-index: 10;
+}
+.qr-center-btn:hover { transform: scale(1.08); box-shadow: 0 6px 0 #143d26, 0 8px 20px rgba(27,67,50,0.5); }
+.qr-center-btn:active { transform: translateY(3px); box-shadow: 0 1px 0 #143d26, 0 2px 8px rgba(27,67,50,0.3); }
+.qr-preview {
+  width: 100%;
+  border-radius: 12px;
+  overflow: hidden;
+  background: #000;
+  position: relative;
+  margin-bottom: 12px;
+}
+.qr-preview video, .qr-preview canvas { width: 100%; display: block; }
+.qr-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+.qr-frame {
+  width: 300px; height: 150px;
+  border: 3px solid var(--accent);
+  border-radius: 10px;
+  box-shadow: 0 0 0 9999px rgba(0,0,0,0.4);
+}
+
+/* ── STATS ── */
+.stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px; }
+.stat-box {
+  background: var(--card);
+  border-radius: 14px;
+  padding: 16px;
+  box-shadow: var(--shadow);
+  text-align: center;
+}
+.stat-value { font-family: 'Merriweather', serif; font-size: 28px; font-weight: 900; color: var(--primary-light); }
+.stat-label { font-size: 11px; color: var(--text2); margin-top: 4px; font-weight: 600; text-transform: uppercase; }
+
+/* ── SECTION TITLE ── */
+.section-title {
+  font-family: 'Merriweather', serif;
+  font-size: var(--fs-folder, 15px);
+  font-weight: 700;
+  color: var(--primary);
+  margin: 18px 0 10px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* ── EMPTY STATE ── */
+.empty-state {
+  text-align: center;
+  padding: 40px 20px;
+  color: var(--text2);
+}
+.empty-state .empty-icon { font-size: 48px; margin-bottom: 12px; }
+.empty-state p { font-size: 14px; }
+
+/* ── SEARCH ── */
+.search-box {
+  display: flex;
+  align-items: center;
+  background: #eeeae1;
+  border: 1.5px solid #c8dbc0;
+  border-radius: 10px;
+  padding: 0 12px;
+  margin-bottom: 12px;
+}
+.search-box input {
+  flex: 1;
+  border: none;
+  padding: 11px 8px;
+  font-size: 14px;
+  font-family: 'Nunito', sans-serif;
+  background: none;
+  color: #1b2e1f;
+}
+.search-box input:focus { outline: none; }
+.search-icon { color: #2d6a4f; font-size: 16px; }
+
+/* ── LEND ACTION MODAL ── */
+.lend-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 16px; }
+.lend-action-btn {
+  padding: 20px;
+  border-radius: 14px;
+  border: 2px solid;
+  cursor: pointer;
+  text-align: center;
+  transition: all 0.2s;
+  background: #ffffff;
+}
+.lend-action-btn:hover { transform: scale(1.03); }
+.lend-action-btn .action-icon { font-size: 32px; margin-bottom: 8px; }
+.lend-action-btn .action-label { font-family: 'Merriweather', serif; font-size: 14px; font-weight: 700; }
+.lend-action-btn .action-sub { font-size: 11px; color: var(--text2); margin-top: 4px; }
+.lend-action-btn.give { border-color: var(--accent2); }
+.lend-action-btn.give:hover { background: #f0fff4; }
+.lend-action-btn.take { border-color: var(--primary-light); }
+.lend-action-btn.take:hover { background: #eff6ff; }
+
+/* ── OVERDUE ── */
+.overdue-row { background: #fff5f5 !important; }
+.overdue-text { color: var(--danger); font-weight: 700; }
+
+/* Divider */
+.divider { height: 1px; background: var(--border); margin: 14px 0; }
+
+/* School name edit inline */
+.school-edit-modal input { font-size: 15px; }
+
+.tab-row { display: flex; gap: 8px; margin-bottom: 14px; }
+.tab-btn {
+  flex: 1;
+  padding: 8px;
+  border-radius: 9px;
+  border: 1.5px solid var(--border);
+  background: white;
+  font-family: 'Nunito', sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  color: var(--text2);
+  transition: all 0.18s;
+}
+.tab-btn.active { background: var(--primary-light); color: white; border-color: var(--primary-light); }
+
+.info-row { display: flex; justify-content: space-between; align-items: center; padding: 7px 0; border-bottom: 1px solid var(--border); }
+.info-row:last-child { border-bottom: none; }
+.info-key { font-size: 12px; color: var(--text2); font-weight: 600; }
+.info-val { font-size: 13px; font-weight: 700; }
+</style>
+</head>
+<body>
+
+<div class="drawer-overlay" id="drawerOverlay" onclick="closeDrawer()"></div>
+
+<div class="drawer" id="mainDrawer">
+  <div class="drawer-header">
+    <div class="drawer-header-icon">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+    </div>
+    <div class="drawer-header-text">
+      <div class="dht-name" id="drawerSchoolName">OKUL KÜTÜPHANESİ</div>
+      <div class="dht-sub">Kütüphane Yönetim Sistemi</div>
+    </div>
+  </div>
+  <div class="drawer-body">
+    <div class="drawer-item" onclick="openInfoModal('about')">
+      <div class="drawer-item-icon" style="background:#dbeafe">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+      </div>
+      <div>
+        <div class="drawer-item-label">Uygulama Hakkında</div>
+        <div class="drawer-item-sub">Sürüm ve bilgiler</div>
+      </div>
+    </div>
+    <div class="drawer-item" onclick="openInfoModal('contact')">
+      <div class="drawer-item-icon" style="background:#fde8c8">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#d97706" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.6 1.18h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.27a16 16 0 0 0 5.55 5.55l1.21-1.21a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 21.28 14z"/></svg>
+      </div>
+      <div>
+        <div class="drawer-item-label">İletişim</div>
+        <div class="drawer-item-sub">Geliştirici bilgileri</div>
+      </div>
+    </div>
+    <div class="drawer-item" onclick="openInfoModal('help')">
+      <div class="drawer-item-icon" style="background:#e0e7ff">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#4338ca" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+      </div>
+      <div>
+        <div class="drawer-item-label">Yardım</div>
+        <div class="drawer-item-sub">Nasıl kullanılır?</div>
+      </div>
+    </div>
+    <div class="drawer-item" onclick="openInfoModal('privacy')">
+      <div class="drawer-item-icon" style="background:#cff0ea">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#0e9076" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+      </div>
+      <div>
+        <div class="drawer-item-label">Gizlilik Politikası</div>
+        <div class="drawer-item-sub">Veri kullanımı</div>
+      </div>
+    </div>
+    <div class="drawer-item" onclick="openInfoModal('settings')">
+      <div class="drawer-item-icon" style="background:#f3e8ff">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#7c3aed" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      </div>
+      <div>
+        <div class="drawer-item-label">Ayarlar</div>
+        <div class="drawer-item-sub">Uygulama tercihleri</div>
+      </div>
+    </div>
+  </div>
+  <div class="drawer-footer">v1.0.0 · Tüm hakları saklıdır</div>
+</div>
+
+<div class="info-modal" id="modal-about">
+  <div class="info-modal-box">
+    <div class="info-modal-title">
+      <span style="width:34px;height:34px;background:#dbeafe;border-radius:10px;display:flex;align-items:center;justify-content:center">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+      </span>
+      Uygulama Hakkında
+      <button class="info-modal-close" onclick="closeInfoModal('about')">✕</button>
+    </div>
+    <div class="info-row">
+      <div class="info-row-icon" style="background:#dbeafe"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg></div>
+      <div class="info-row-text"><div class="irt-label">Uygulama Adı</div><div class="irt-val">Okul Kütüphane Yönetim Sistemi</div></div>
+    </div>
+    <div class="info-row">
+      <div class="info-row-icon" style="background:#e0e7ff"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#4338ca" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div>
+      <div class="info-row-text"><div class="irt-label">Sürüm</div><div class="irt-val">1.0.0</div></div>
+    </div>
+    <div class="info-row">
+      <div class="info-row-icon" style="background:#cff0ea"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#0e9076" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg></div>
+      <div class="info-row-text"><div class="irt-label">Platform</div><div class="irt-val">Web / Mobil</div></div>
+    </div>
+    <div style="margin-top:16px;padding:14px;background:#eeeae1;border-radius:12px;font-size:13px;color:#444;line-height:1.6">
+      Bu uygulama, bir Türkçe öğretmeni tarafından öğrencileriyle daha derin bir kitap sevgisi kurmak için tasarlandı. Türkçe öğretmenlerinin ödünç verdiği kitapları kolayca yönetebilmesi, hangi öğrencinin hangi kitabı okuduğunu takip edebilmesi ve adeta seyyar bir kütüphane gibi her öğrenciye ulaşabilmesi amacıyla geliştirildi. Tüm veriler yalnızca cihazınızda saklanır, internet bağlantısı gerekmez.
+    </div>
+  </div>
+</div>
+
+<div class="info-modal" id="modal-contact">
+  <div class="info-modal-box">
+    <div class="info-modal-title">
+      <span style="width:34px;height:34px;background:#fde8c8;border-radius:10px;display:flex;align-items:center;justify-content:center">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#d97706" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.6 1.18h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.27a16 16 0 0 0 5.55 5.55l1.21-1.21a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 21.28 14z"/></svg>
+      </span>
+      İletişim
+      <button class="info-modal-close" onclick="closeInfoModal('contact')">✕</button>
+    </div>
+    <div class="info-row">
+      <div class="info-row-icon" style="background:#fde8c8"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#d97706" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg></div>
+      <div class="info-row-text"><div class="irt-label">E-posta</div><div class="irt-val">gelistirici@email.com</div></div>
+    </div>
+    <div class="info-row">
+      <div class="info-row-icon" style="background:#cff0ea"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#0e9076" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.6 1.18h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.27a16 16 0 0 0 5.55 5.55l1.21-1.21a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 21.28 14z"/></svg></div>
+      <div class="info-row-text"><div class="irt-label">Telefon</div><div class="irt-val">0530 299 25 15</div></div>
+    </div>
+    <div style="margin-top:16px;padding:14px;background:#eeeae1;border-radius:12px;font-size:13px;color:#444;line-height:1.6">
+      Öneri, şikayet veya teknik destek için yukarıdaki iletişim bilgilerini kullanabilirsiniz.
+    </div>
+  </div>
+</div>
+
+<div class="info-modal" id="modal-help">
+  <div class="info-modal-box">
+    <div class="info-modal-title">
+      <span style="width:34px;height:34px;background:#e0e7ff;border-radius:10px;display:flex;align-items:center;justify-content:center">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#4338ca" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+      </span>
+      Yardım
+      <button class="info-modal-close" onclick="closeInfoModal('help')">✕</button>
+    </div>
+    <div class="info-row">
+      <div class="info-row-icon" style="background:#e0e7ff">🏫</div>
+      <div class="info-row-text"><div class="irt-label">Sınıflar</div><div class="irt-val">Sınıf ve öğrenci ekleyin, yönetin</div></div>
+    </div>
+    <div class="info-row">
+      <div class="info-row-icon" style="background:#fde8c8">📚</div>
+      <div class="info-row-text"><div class="irt-label">Kitaplar</div><div class="irt-val">Kitap ekleyin ve stoğu takip edin</div></div>
+    </div>
+    <div class="info-row">
+      <div class="info-row-icon" style="background:#cff0ea">📤</div>
+      <div class="info-row-text"><div class="irt-label">Ödünç</div><div class="irt-val">Kitap verin ve iade alın</div></div>
+    </div>
+    <div class="info-row">
+      <div class="info-row-icon" style="background:#dbeafe">📊</div>
+      <div class="info-row-text"><div class="irt-label">İstatistik</div><div class="irt-val">Okuma istatistiklerini görün</div></div>
+    </div>
+    <div style="margin-top:16px;padding:14px;background:#eeeae1;border-radius:12px;font-size:13px;color:#444;line-height:1.6">
+      Uzun basarak sınıf, öğrenci veya kitapları düzenleyebilir ya da silebilirsiniz.
+    </div>
+  </div>
+</div>
+
+<div class="info-modal" id="modal-privacy">
+  <div class="info-modal-box">
+    <div class="info-modal-title">
+      <span style="width:34px;height:34px;background:#cff0ea;border-radius:10px;display:flex;align-items:center;justify-content:center">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#0e9076" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+      </span>
+      Gizlilik Politikası
+      <button class="info-modal-close" onclick="closeInfoModal('privacy')">✕</button>
+    </div>
+    <div style="font-size:13px;color:#444;line-height:1.7;margin-top:4px">
+      <p style="margin:0 0 12px">Bu uygulama hiçbir kişisel veriyi sunucuya göndermez. Tüm veriler yalnızca cihazınızdaki yerel depolama alanında (localStorage) tutulur.</p>
+      <p style="margin:0 0 12px">Uygulama internet bağlantısı gerektirmez ve üçüncü taraflarla veri paylaşımı yapılmaz.</p>
+      <p style="margin:0">Verilerin yedeklenmesi kullanıcının sorumluluğundadır.</p>
+    </div>
+  </div>
+</div>
+
+<div class="info-modal" id="modal-settings">
+  <div class="info-modal-box">
+    <div class="info-modal-title">
+      <span style="width:34px;height:34px;background:#f3e8ff;border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#7c3aed" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      </span>
+      Ayarlar
+      <button class="info-modal-close" onclick="closeInfoModal('settings')">✕</button>
+    </div>
+
+    <div style="margin-bottom:16px">
+      <div style="font-size:11px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:0.8px;margin-bottom:8px">Okul Bilgileri</div>
+      <div style="background:#eeeae1;border-radius:12px;padding:4px 0">
+        <div style="padding:12px 14px;border-bottom:1px solid rgba(0,0,0,0.07)">
+          <div style="font-size:12px;color:#888;margin-bottom:4px">Okul Adı</div>
+          <input id="settingsSchoolName" style="width:100%;border:none;background:none;font-family:'Nunito',sans-serif;font-size:14px;font-weight:700;color:#1a1a1a;outline:none" placeholder="Okul adını girin...">
+        </div>
+        <div style="padding:12px 14px">
+          <div style="font-size:12px;color:#888;margin-bottom:4px">Alt Başlık</div>
+          <input id="settingsSchoolSub" style="width:100%;border:none;background:none;font-family:'Nunito',sans-serif;font-size:14px;color:#1a1a1a;outline:none" placeholder="ör: Kütüphane Yönetim Sistemi">
+        </div>
+      </div>
+    </div>
+
+    <div style="margin-bottom:16px">
+      <div style="font-size:11px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:0.8px;margin-bottom:8px">Görünüm</div>
+      <div style="background:#eeeae1;border-radius:12px;padding:12px 14px">
+        <div style="font-size:14px;font-weight:700;color:#1a1a1a;margin-bottom:10px">Yazı Boyutu</div>
+        <div style="display:flex;gap:8px">
+          <button onclick="setFontSize('small')" id="fs-small"
+            style="flex:1;padding:10px 0;border-radius:10px;border:2px solid transparent;background:#fff;font-family:'Nunito',sans-serif;font-size:13px;font-weight:700;cursor:pointer;color:#1a1a1a">
+            A<br><span style="font-size:10px;font-weight:500;color:#888">Küçük</span>
+          </button>
+          <button onclick="setFontSize('normal')" id="fs-normal"
+            style="flex:1;padding:10px 0;border-radius:10px;border:2px solid transparent;background:#fff;font-family:'Nunito',sans-serif;font-size:16px;font-weight:700;cursor:pointer;color:#1a1a1a">
+            A<br><span style="font-size:10px;font-weight:500;color:#888">Orta</span>
+          </button>
+          <button onclick="setFontSize('large')" id="fs-large"
+            style="flex:1;padding:10px 0;border-radius:10px;border:2px solid transparent;background:#fff;font-family:'Nunito',sans-serif;font-size:17px;font-weight:700;cursor:pointer;color:#1a1a1a">
+            A<br><span style="font-size:10px;font-weight:500;color:#888">Büyük</span>
+          </button>
+          <button onclick="setFontSize('xlarge')" id="fs-xlarge"
+            style="flex:1;padding:10px 0;border-radius:10px;border:2px solid transparent;background:#fff;font-family:'Nunito',sans-serif;font-size:20px;font-weight:700;cursor:pointer;color:#1a1a1a">
+            A<br><span style="font-size:10px;font-weight:500;color:#888">Çok Büyük</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div style="margin-bottom:16px">
+      <div style="font-size:11px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:0.8px;margin-bottom:8px">Renkler</div>
+      <div style="background:#eeeae1;border-radius:12px;overflow:hidden">
+
+        <div style="padding:12px 14px;border-bottom:1px solid rgba(0,0,0,0.07);display:flex;align-items:center;justify-content:space-between">
+          <div>
+            <div style="font-size:14px;font-weight:700;color:#1a1a1a">Başlık Çubuğu</div>
+            <div style="font-size:12px;color:#888;margin-top:2px">Header arka plan rengi</div>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px">
+            <div id="prev-clr-header" style="width:28px;height:28px;border-radius:7px;border:2px solid rgba(0,0,0,0.1);background:#4a7c8e"></div>
+            <input type="color" id="clr-header" value="#4a7c8e" oninput="applyColor('header',this.value)"
+              style="width:36px;height:36px;border:none;border-radius:8px;cursor:pointer;padding:2px;background:none">
+          </div>
+        </div>
+
+        <div style="padding:12px 14px;border-bottom:1px solid rgba(0,0,0,0.07);display:flex;align-items:center;justify-content:space-between">
+          <div>
+            <div style="font-size:14px;font-weight:700;color:#1a1a1a">Arka Plan</div>
+            <div style="font-size:12px;color:#888;margin-top:2px">Sayfa arka plan rengi</div>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px">
+            <div id="prev-clr-bg" style="width:28px;height:28px;border-radius:7px;border:2px solid rgba(0,0,0,0.1);background:#f7f3ec"></div>
+            <input type="color" id="clr-bg" value="#f7f3ec" oninput="applyColor('bg',this.value)"
+              style="width:36px;height:36px;border:none;border-radius:8px;cursor:pointer;padding:2px;background:none">
+          </div>
+        </div>
+
+        <div style="padding:12px 14px;border-bottom:1px solid rgba(0,0,0,0.07);display:flex;align-items:center;justify-content:space-between">
+          <div>
+            <div style="font-size:14px;font-weight:700;color:#1a1a1a">Liste Yazıları</div>
+            <div style="font-size:12px;color:#888;margin-top:2px">Kitap, sınıf, öğrenci adları</div>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px">
+            <div id="prev-clr-item" style="width:28px;height:28px;border-radius:7px;border:2px solid rgba(0,0,0,0.1);background:#222222"></div>
+            <input type="color" id="clr-item" value="#222222" oninput="applyColor('item',this.value)"
+              style="width:36px;height:36px;border:none;border-radius:8px;cursor:pointer;padding:2px;background:none">
+          </div>
+        </div>
+
+        <div style="padding:12px 14px;display:flex;align-items:center;justify-content:space-between">
+          <div>
+            <div style="font-size:14px;font-weight:700;color:#1a1a1a">Alt Yazılar</div>
+            <div style="font-size:12px;color:#888;margin-top:2px">Yazar, tarih, sınıf bilgisi</div>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px">
+            <div id="prev-clr-sub" style="width:28px;height:28px;border-radius:7px;border:2px solid rgba(0,0,0,0.1);background:#888888"></div>
+            <input type="color" id="clr-sub" value="#888888" oninput="applyColor('sub',this.value)"
+              style="width:36px;height:36px;border:none;border-radius:8px;cursor:pointer;padding:2px;background:none">
+          </div>
+        </div>
+
+      </div>
+      <button onclick="resetColors()" style="width:100%;margin-top:8px;padding:8px;background:transparent;border:1.5px solid #ccc;border-radius:10px;font-family:'Nunito',sans-serif;font-size:12px;font-weight:700;color:#888;cursor:pointer">↺ Varsayılan Renklere Dön</button>
+    </div>
+
+    <div style="margin-bottom:16px">
+      <div style="font-size:11px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:0.8px;margin-bottom:8px">Ödünç Ayarları</div>
+      <div style="background:#eeeae1;border-radius:12px;padding:12px 14px;display:flex;align-items:center;justify-content:space-between">
+        <div>
+          <div style="font-size:14px;font-weight:700;color:#1a1a1a">Varsayılan Vade Süresi</div>
+          <div style="font-size:12px;color:#888;margin-top:2px">Kitap ödünç verme süresi</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <button onclick="changeDefaultDays(-1)" style="width:30px;height:30px;border-radius:8px;border:none;background:#fff;font-size:18px;cursor:pointer;font-weight:700;color:#1b4332">−</button>
+          <span id="settingsDaysDisplay" style="font-size:16px;font-weight:800;color:#1b4332;min-width:50px;text-align:center"></span>
+          <button onclick="changeDefaultDays(1)" style="width:30px;height:30px;border-radius:8px;border:none;background:#fff;font-size:18px;cursor:pointer;font-weight:700;color:#1b4332">+</button>
+        </div>
+      </div>
+    </div>
+
+    <div style="margin-bottom:16px">
+      <div style="font-size:11px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:0.8px;margin-bottom:8px">Veri Yönetimi</div>
+      <div style="background:#eeeae1;border-radius:12px;overflow:hidden">
+        <div onclick="exportData()" style="padding:12px 14px;border-bottom:1px solid rgba(0,0,0,0.07);cursor:pointer;display:flex;align-items:center;gap:10px">
+          <span style="font-size:18px">📤</span>
+          <div>
+            <div style="font-size:14px;font-weight:700;color:#1a1a1a">Verileri Dışa Aktar</div>
+            <div style="font-size:12px;color:#888">JSON dosyası olarak indir</div>
+          </div>
+        </div>
+        <div onclick="openImportModal()" style="padding:12px 14px;cursor:pointer;display:flex;align-items:center;gap:10px">
+          <span style="font-size:18px">📥</span>
+          <div>
+            <div style="font-size:14px;font-weight:700;color:#1a1a1a">Verileri İçe Aktar</div>
+            <div style="font-size:12px;color:#888">Yedek metnini yapıştır</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <button onclick="saveSettings()" style="width:100%;padding:13px;background:#3a8a64;color:#fff;border:none;border-radius:12px;font-family:'Nunito',sans-serif;font-size:14px;font-weight:700;cursor:pointer">Kaydet</button>
+  </div>
+</div>
+
+<div class="info-modal" id="modal-overdue" style="z-index:500">
+  <div class="info-modal-box" style="max-height:85vh">
+    <div class="info-modal-title" style="color:#dc2626">
+      <span style="width:34px;height:34px;background:#fce7e7;border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#dc2626" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+      </span>
+      Vadesi Geçmiş Kitaplar
+      <button class="info-modal-close" onclick="closeInfoModal('overdue')" style="margin-left:auto">&#x2715;</button>
+    </div>
+    <p id="overdueSubtitle" style="font-size:13px;color:#dc2626;font-weight:700;margin:8px 0 12px"></p>
+    <div id="overdueList"></div>
+    <button onclick="closeInfoModal('overdue')" style="width:100%;margin-top:16px;padding:12px;background:#dc2626;color:#fff;border:none;border-radius:12px;font-family:'Nunito',sans-serif;font-size:14px;font-weight:700;cursor:pointer">Tamam, Anladım</button>
+  </div>
+</div>
+
+<div class="header">
+  <button class="hamburger-btn" onclick="openDrawer()">
+    <span></span><span></span><span></span>
+  </button>
+  <button id="headerSearchBtn" onclick="toggleHeaderSearch()" style="position:absolute;right:16px;top:50%;transform:translateY(-50%);background:rgba(255,255,255,0.18);border:none;border-radius:10px;width:38px;height:38px;display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+  </button>
+  <div class="header-title" id="headerTitle"
+    onmousedown="startLongPress()" onmouseup="cancelLongPress()" onmouseleave="cancelLongPress()"
+    ontouchstart="startLongPress()" ontouchend="cancelLongPress()" ontouchcancel="cancelLongPress()">
+    <span id="schoolNameDisplay">OKUL KÜTÜPHANESİ</span>
+    <span id="schoolSubDisplay">Kütüphane Yönetim Sistemi</span>
+  </div>
+</div>
+<div id="headerSearchBar" style="display:none;background:#3d6b7a;padding:8px 16px 10px">
+  <div style="display:flex;align-items:center;background:rgba(255,255,255,0.15);border-radius:10px;padding:0 12px;height:38px">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.8)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;margin-right:8px"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+    <input type="text" id="headerSearchInput" placeholder="Ara..." oninput="onHeaderSearch()" style="border:none;background:none;font-family:'Nunito',sans-serif;font-size:14px;color:white;width:100%;outline:none" />
+    <button onclick="clearHeaderSearch()" id="headerSearchClear" style="display:none;background:none;border:none;color:rgba(255,255,255,0.7);font-size:18px;cursor:pointer;padding:0;line-height:1">&#x2715;</button>
+  </div>
+</div>
+
+<div class="page active" id="page-siniflar">
+  <input type="hidden" id="classSearch" oninput="renderClasses()">
+  <div id="classList"></div>
+  <div onclick="openAddClass()" style="margin-top:4px;background:transparent;border-radius:10px;border:1.5px dashed #ccc;padding:8px 16px;display:flex;align-items:center;justify-content:center;gap:6px;cursor:pointer;color:#aaa;font-family:'Nunito',sans-serif;font-size:13px;font-weight:600">
+    <span style="font-size:15px">+</span> Sınıf Ekle
+  </div>
+</div>
+
+<div class="page" id="page-kitaplar">
+  <input type="hidden" id="bookSearch" oninput="renderBooks()">
+  <div id="bookList"></div>
+  <div onclick="openAddBook()" style="margin-top:4px;background:transparent;border-radius:10px;border:1.5px dashed #ccc;padding:8px 16px;display:flex;align-items:center;justify-content:center;gap:6px;cursor:pointer;color:#aaa;font-family:'Nunito',sans-serif;font-size:13px;font-weight:600">
+    <span style="font-size:15px">+</span> Kitap Ekle
+  </div>
+</div>
+
+<div class="page" id="page-odunc">
+  <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px;padding-bottom:10px;border-bottom:1.5px solid rgba(0,0,0,0.07)">
+    <button id="tab-verilenler" onclick="switchLendTab('verilenler')" style="height:36px;flex:1;font-family:'Nunito',sans-serif;font-size:13px;font-weight:700;border:1.5px solid #c8dbc0;border-radius:9px;cursor:pointer;background:#3a8a64;color:#fff">📤 Verilenler</button>
+    <button id="tab-alinanlar" onclick="switchLendTab('alinanlar')" style="height:36px;flex:1;font-family:'Nunito',sans-serif;font-size:13px;font-weight:700;border:1.5px solid #c8dbc0;border-radius:9px;cursor:pointer;background:#eeeae1;color:#1b4332">📥 Alınanlar</button>
+  </div>
+
+  <div id="lendList"></div>
+</div>
+
+<div class="page" id="page-istatistik">
+  <div id="itab-content-istatistik">
+    
+    <div id="statNumbers"></div>
+
+    <div class="stat-section-card" onclick="toggleStatSection('topBooks')">
+      <div class="stat-section-header">
+        <span>📚 En Çok Okunan Kitaplar</span>
+        <span class="folder-arrow" id="arrow-topBooks">›</span>
+      </div>
+      <div id="preview-topBooks" class="stat-preview"></div>
+      <div class="folder-body" id="body-topBooks" style="height:0;opacity:0">
+        <div id="full-topBooks" style="padding-top:8px"></div>
+      </div>
+    </div>
+
+    <div class="stat-section-card" onclick="toggleStatSection('topStudents')">
+      <div class="stat-section-header">
+        <span>👤 En Çok Okuyan Öğrenci (Kitap Sayısı)</span>
+        <span class="folder-arrow" id="arrow-topStudents">›</span>
+      </div>
+      <div id="preview-topStudents" class="stat-preview"></div>
+      <div class="folder-body" id="body-topStudents" style="height:0;opacity:0">
+        <div id="full-topStudents" style="padding-top:8px"></div>
+      </div>
+    </div>
+
+    <div class="stat-section-card" onclick="toggleStatSection('topPages')">
+      <div class="stat-section-header">
+        <span>📖 En Çok Okuyan Öğrenci (Sayfa Sayısı)</span>
+        <span class="folder-arrow" id="arrow-topPages">›</span>
+      </div>
+      <div id="preview-topPages" class="stat-preview"></div>
+      <div class="folder-body" id="body-topPages" style="height:0;opacity:0">
+        <div id="full-topPages" style="padding-top:8px"></div>
+      </div>
+    </div>
+
+    <div class="stat-section-card" onclick="toggleStatSection('topClasses')">
+      <div class="stat-section-header">
+        <span>🏫 En Çok Okuyan Sınıf (Kitap Sayısı)</span>
+        <span class="folder-arrow" id="arrow-topClasses">›</span>
+      </div>
+      <div id="preview-topClasses" class="stat-preview"></div>
+      <div class="folder-body" id="body-topClasses" style="height:0;opacity:0">
+        <div id="full-topClasses" style="padding-top:8px"></div>
+      </div>
+    </div>
+
+    <div class="stat-section-card" onclick="toggleStatSection('topClassPages')">
+      <div class="stat-section-header">
+        <span>📄 En Çok Okuyan Sınıf (Sayfa Sayısı)</span>
+        <span class="folder-arrow" id="arrow-topClassPages">›</span>
+      </div>
+      <div id="preview-topClassPages" class="stat-preview"></div>
+      <div class="folder-body" id="body-topClassPages" style="height:0;opacity:0">
+        <div id="full-topClassPages" style="padding-top:8px"></div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div class="action-sheet-overlay" id="actionSheet" onclick="closeActionSheet()">
+  <div class="action-sheet" onclick="event.stopPropagation()">
+    <div class="action-sheet-title" id="actionSheetTitle"></div>
+    <button class="action-sheet-btn" id="actionSheetEdit" onclick="closeActionSheet();actionSheetEditFn&&actionSheetEditFn()">
+      <span style="width:32px;height:32px;border-radius:50%;background:#f0fdf4;display:inline-flex;align-items:center;justify-content:center"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#0e9076" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></span> Düzenle
+    </button>
+    <button class="action-sheet-btn danger" id="actionSheetDelete" onclick="closeActionSheet();actionSheetDeleteFn&&actionSheetDeleteFn()">
+      <span style="width:32px;height:32px;border-radius:50%;background:#fff1f2;display:inline-flex;align-items:center;justify-content:center"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#0e9076" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg></span> Sil
+    </button>
+    <button class="action-sheet-cancel" onclick="closeActionSheet()">İptal</button>
+  </div>
+</div>
+
+<nav class="bottom-nav">
+  <button class="nav-btn active" onclick="showPage('siniflar',this)" id="nav-siniflar">
+    <span class="nav-icon" style="background:#e0e7ff;border-radius:12px;padding:4px">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#4338ca" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>
+      </svg>
+    </span>
+    <span class="nav-label">Sınıflar</span>
+  </button>
+  <button class="nav-btn" onclick="showPage('kitaplar',this)" id="nav-kitaplar">
+    <span class="nav-icon" style="background:#fde8c8;border-radius:12px;padding:4px">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#d97706" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
+      </svg>
+    </span>
+    <span class="nav-label">Kitaplar</span>
+  </button>
+
+  <button class="nav-btn" onclick="openQRScanner('smart')">
+    <span class="nav-icon" style="background:#ffffff;border-radius:12px;padding:4px;border:2px solid #3a8a64">
+      <svg width="28" height="28" viewBox="0 0 32 32" fill="#1a1a1a">
+        <rect x="1" y="2" width="3" height="28"/>
+        <rect x="6" y="2" width="5" height="28"/>
+        <rect x="13" y="2" width="2" height="28"/>
+        <rect x="17" y="2" width="2" height="28"/>
+        <rect x="21" y="2" width="4" height="28"/>
+        <rect x="27" y="2" width="3" height="28"/>
+      </svg>
+    </span>
+    <span class="nav-label">ISBN Tara</span>
+  </button>
+
+  <button class="nav-btn" onclick="showPage('odunc',this)" id="nav-odunc" style="position:relative">
+    <span class="nav-icon" style="background:#cff0ea;border-radius:12px;padding:4px">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#0e9076" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M8 3H5a2 2 0 0 0-2 2v3"/><path d="M21 8V5a2 2 0 0 0-2-2h-3"/><path d="M3 16v3a2 2 0 0 0 2 2h3"/><path d="M16 21h3a2 2 0 0 0 2-2v-3"/>
+        <polyline points="7 12 10 15 17 9"/>
+      </svg>
+    </span>
+    <span class="nav-label">Ödünç</span>
+    <span class="nav-badge" id="lendBadge" style="display:none">0</span>
+  </button>
+  <button class="nav-btn" onclick="showPage('istatistik',this)" id="nav-istatistik">
+    <span class="nav-icon" style="background:#dbeafe;border-radius:12px;padding:4px">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/>
+      </svg>
+    </span>
+    <span class="nav-label">İstatistik</span>
+  </button>
+</nav>
+
+<div class="modal-overlay" id="modal-school">
+  <div class="modal modal-center" style="max-width:400px">
+    <div class="modal-title">✏️ Okul Adını Düzenle <button class="modal-close" onclick="closeModal('modal-school')">✕</button></div>
+    <div class="form-group">
+      <label class="form-label">Okul Adı</label>
+      <input class="form-input" id="schoolNameInput" placeholder="Okul adını girin...">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Alt Başlık (isteğe bağlı)</label>
+      <input class="form-input" id="schoolSubInput" placeholder="ör: Kütüphane Yönetim Sistemi">
+    </div>
+    <div style="display:flex;gap:10px;margin-top:8px">
+      <button class="btn btn-ghost btn-full" onclick="closeModal('modal-school')">İptal</button>
+      <button class="btn btn-primary btn-full" onclick="saveSchoolName()">Kaydet</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-addclass">
+  <div class="modal">
+    <div class="modal-title" id="modal-addclass-title">🏫 Sınıf Ekle <button class="modal-close" onclick="closeModal('modal-addclass')">✕</button></div>
+    <div class="form-group">
+      <label class="form-label">Sınıf Adı</label>
+      <input class="form-input" id="classNameInput" placeholder="ör: 5-A, 6-B...">
+    </div>
+    <div style="display:flex;gap:10px;margin-top:8px">
+      <button class="btn btn-ghost btn-full" onclick="closeModal('modal-addclass')">İptal</button>
+      <button class="btn btn-primary btn-full" id="saveClassBtn" onclick="saveClass()">Kaydet</button>
+    </div>
+  </div>
+</div>
+
+<div class="page slide-page" id="page-classdetail">
+  <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px">
+    <button class="back-btn" onclick="closeClassDetail()">←</button>
+    <div class="section-title" style="font-size:20px;margin:0" id="classDetailTitle">Sınıf</div>
+  </div>
+  <button class="btn btn-primary btn-sm btn-full" style="margin-bottom:14px" onclick="openAddStudent()">+ Öğrenci Ekle</button>
+  <div id="studentList"></div>
+</div>
+
+<div class="page slide-page" id="page-bookdetail">
+  <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px">
+    <button class="back-btn" onclick="closeBookDetail()">←</button>
+    <div>
+      <div class="section-title" style="font-size:18px;margin:0" id="bookDetailTitle">Kitap</div>
+      <div id="bookDetailSub" style="font-size:12px;color:var(--text2);margin-top:3px"></div>
+    </div>
+  </div>
+  <div id="bookDetailContent"></div>
+</div>
+
+<div class="page slide-page" id="page-studentdetail">
+  <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px">
+    <button class="back-btn" onclick="closeStudentDetail()">←</button>
+    <div>
+      <div class="section-title" style="font-size:18px;margin:0" id="studentDetailName">Öğrenci</div>
+      <div id="studentDetailSub" style="font-size:12px;color:var(--text2);margin-top:3px"></div>
+    </div>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px">
+    <button class="btn btn-success btn-full" onclick="openGiveBookManual()">📖 Manuel Kitap Ver</button>
+    <button class="btn btn-primary btn-full" onclick="openQRForStudent()">📷 QR ile Kitap Ver</button>
+  </div>
+  <div id="studentBookHistory"></div>
+</div>
+
+<div class="modal-overlay" id="modal-addstudent">
+  <div class="modal">
+    <div class="modal-title" id="modal-addstudent-title">👤 Öğrenci Ekle <button class="modal-close" onclick="closeModal('modal-addstudent')">✕</button></div>
+    <div class="form-group">
+      <label class="form-label">Ad Soyad</label>
+      <input class="form-input" id="studentNameInput" placeholder="Öğrenci adı soyadı...">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Öğrenci No (isteğe bağlı)</label>
+      <input class="form-input" id="studentNoInput" placeholder="ör: 2024001">
+    </div>
+    <div style="display:flex;gap:10px;margin-top:8px">
+      <button class="btn btn-ghost btn-full" onclick="closeModal('modal-addstudent')">İptal</button>
+      <button class="btn btn-primary btn-full" id="saveStudentBtn" onclick="saveStudent()">Kaydet</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-givebookmanual">
+  <div class="modal">
+    <div class="modal-title">📖 Kitap Ver <button class="modal-close" onclick="closeModal('modal-givebookmanual')">✕</button></div>
+    <div id="givebookStudentInfo" style="background:var(--bg);border-radius:12px;padding:12px;margin-bottom:14px;font-size:14px;font-weight:700;color:var(--primary)"></div>
+    <div class="form-group">
+      <label class="form-label">Kitap Seç</label>
+      <div class="search-box" style="margin-bottom:8px">
+        <span class="search-icon">🔍</span>
+        <input type="text" id="giveBookSearch" placeholder="Kitap ara..." oninput="renderGiveBookList()">
+      </div>
+      <div id="giveBookList" style="max-height:180px;overflow-y:auto;border:1.5px solid var(--border);border-radius:10px"></div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      <div class="form-group" style="margin-bottom:0">
+        <label class="form-label">Verme Tarihi</label>
+        <input class="form-input" type="date" id="giveDateInput" readonly style="background:#c8e6d4;color:var(--primary);font-weight:700;cursor:default">
+      </div>
+      <div class="form-group" style="margin-bottom:0">
+        <label class="form-label">Teslim Tarihi</label>
+        <input class="form-input" type="date" id="giveDueDateInput">
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-addbook">
+  <div class="modal">
+    <div class="modal-title" id="modal-addbook-title">📖 Kitap Ekle <button class="modal-close" onclick="closeModal('modal-addbook')">✕</button></div>
+    
+    <!-- Kitap Bilgileri (ISBN'den otomatik doldurulur) -->
+    <div id="bookAutoInfo" style="display:none;background:#f0faf5;border-radius:12px;padding:12px;margin-bottom:14px">
+      <div style="display:flex;gap:12px;align-items:flex-start">
+        <div style="position:relative;flex-shrink:0">
+          <img id="bookCoverImg" src="" style="width:56px;height:80px;border-radius:8px;object-fit:cover;display:none">
+          <div id="bookCoverPlaceholder" onclick="openCameraForCover()" style="width:56px;height:80px;border-radius:8px;background:#e8f5ee;border:2px dashed #3a8a64;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;gap:4px">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#3a8a64" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+            <span style="font-size:9px;color:#3a8a64;font-weight:700;text-align:center">Fotoğraf</span>
+          </div>
+        </div>
+        <div id="bookAutoText" style="flex:1;font-size:13px;color:#1b4332;font-weight:600;line-height:1.6"></div>
+      </div>
+    </div>
+    <div id="bookLoadingInfo" style="display:none;text-align:center;padding:10px;font-size:13px;color:#888;font-family:'Nunito',sans-serif">
+      🔍 Kitap bilgileri aranıyor...
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Kitap Adı *</label>
+      <input class="form-input" id="bookTitleInput" placeholder="Kitap adı..." autocomplete="off">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Yazar</label>
+      <input class="form-input" id="bookAuthorInput" placeholder="Yazar adı..." autocomplete="off">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Sayfa Sayısı</label>
+      <input class="form-input" id="bookPagesInput" type="number" min="1" placeholder="ör: 256">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Barkod / ISBN (isteğe bağlı)</label>
+      <input class="form-input" id="bookIsbnInput" placeholder="ör: 9789750726439">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Adet</label>
+      <input class="form-input" id="bookQtyInput" type="number" min="1" value="1">
+    </div>
+    <div style="display:flex;gap:10px;margin-top:8px">
+      <button class="btn btn-ghost btn-full" type="button" onclick="closeModal('modal-addbook')">İptal</button>
+      <button class="btn btn-primary btn-full" id="saveBookBtn" type="button" onclick="saveBook()">Kaydet</button>
+    </div>
+  </div>
+</div>
+
+<style>
+@keyframes scanLine {
+  0% { top: 10px; }
+  50% { top: calc(100% - 10px); }
+  100% { top: 10px; }
+}
+@keyframes scanDots {
+  0%, 100% { opacity: 0.3; transform: scale(0.8); }
+  50% { opacity: 1; transform: scale(1.2); }
+}
+.scan-line {
+  position: absolute;
+  left: 0; right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, #22c55e, #22c55e, transparent);
+  animation: scanLine 2s ease-in-out infinite;
+  box-shadow: 0 0 6px #22c55e;
+}
+.scan-dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: #22c55e;
+  animation: scanDots 1s ease-in-out infinite;
+}
+.scan-dot:nth-child(2) { animation-delay: 0.2s; }
+.scan-dot:nth-child(3) { animation-delay: 0.4s; }
+</style>
+
+<div class="modal-overlay" id="modal-qr" style="align-items:center">
+  <div style="width:100%;max-width:480px;background:#111;min-height:100vh;display:flex;flex-direction:column">
+    
+    <!-- Header -->
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:16px;background:#000">
+      <button onclick="closeQR()" style="width:40px;height:40px;border-radius:50%;background:rgba(255,255,255,0.15);border:none;color:white;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center">←</button>
+      <div style="color:white;font-family:'Nunito',sans-serif;font-size:15px;font-weight:700">ISBN Tara</div>
+      <button onclick="toggleBipFromScanner()" id="scannerBipBtn" style="width:40px;height:40px;border-radius:50%;background:rgba(255,255,255,0.15);border:none;color:white;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center">🔊</button>
+    </div>
+
+    <!-- Kamera -->
+    <div style="position:relative;flex:1;background:#000;min-height:300px">
+      <video id="qrVideo" autoplay playsinline muted style="width:100%;height:100%;object-fit:cover;display:block"></video>
+      <canvas id="qrCanvas" style="display:none"></canvas>
+      
+      <!-- Karartma + çerçeve -->
+      <div style="position:absolute;inset:0;pointer-events:none">
+        <!-- Üst karartma -->
+        <div style="position:absolute;top:0;left:0;right:0;height:80px;background:rgba(0,0,0,0.55)"></div>
+        <!-- Alt karartma -->
+        <div style="position:absolute;bottom:0;left:0;right:0;height:80px;background:rgba(0,0,0,0.55)"></div>
+        <!-- Sol karartma -->
+        <div style="position:absolute;top:80px;bottom:80px;left:0;width:30px;background:rgba(0,0,0,0.55)"></div>
+        <!-- Sağ karartma -->
+        <div style="position:absolute;top:80px;bottom:80px;right:0;width:30px;background:rgba(0,0,0,0.55)"></div>
+        
+        <!-- Tarama çerçevesi -->
+        <div style="position:absolute;top:80px;bottom:80px;left:30px;right:30px;border:2px solid #22c55e;border-radius:8px;overflow:hidden">
+          <!-- Animasyonlu tarama çizgisi -->
+          <div class="scan-line"></div>
+          <!-- Köşe işaretleri -->
+          <div style="position:absolute;top:0;left:0;width:20px;height:20px;border-top:3px solid #22c55e;border-left:3px solid #22c55e"></div>
+          <div style="position:absolute;top:0;right:0;width:20px;height:20px;border-top:3px solid #22c55e;border-right:3px solid #22c55e"></div>
+          <div style="position:absolute;bottom:0;left:0;width:20px;height:20px;border-bottom:3px solid #22c55e;border-left:3px solid #22c55e"></div>
+          <div style="position:absolute;bottom:0;right:0;width:20px;height:20px;border-bottom:3px solid #22c55e;border-right:3px solid #22c55e"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Status ve manuel giriş -->
+    <div style="background:#111;padding:16px">
+      <div id="qrStatus" style="text-align:center;font-size:13px;color:#aaa;margin-bottom:12px;min-height:18px;font-family:'Nunito',sans-serif">Kamerayı barkoda doğrultun...</div>
+      <!-- Tarama noktaları animasyonu -->
+      <div style="display:flex;justify-content:center;gap:8px;margin-bottom:16px">
+        <div class="scan-dot"></div>
+        <div class="scan-dot"></div>
+        <div class="scan-dot"></div>
+      </div>
+      <div style="display:flex;gap:8px">
+        <input class="form-input" id="manualBarcode" placeholder="Manuel ISBN girin..." style="flex:1;background:#222;color:white;border-color:#333">
+        <button class="btn btn-primary" onclick="handleManualBarcode()">Git</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-qrselect">
+  <div class="modal">
+    <div class="modal-title">📷 Ne yapmak istiyorsunuz? <button class="modal-close" onclick="closeModal('modal-qrselect')">✕</button></div>
+    <div style="display:flex;flex-direction:column;gap:10px;margin-top:4px">
+
+      <div onclick="closeModal('modal-qrselect');openQRScanner('lend')" style="display:flex;align-items:center;gap:14px;padding:14px 16px;background:#e8f5ee;border-radius:14px;cursor:pointer;border:1.5px solid #b7d4b0">
+        <div style="width:44px;height:44px;border-radius:12px;background:#22c55e;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/><polyline points="9 11 12 14 22 4"/></svg>
+        </div>
+        <div>
+          <div style="font-size:15px;font-weight:800;color:#1a1a1a">Ödünç Ver</div>
+          <div style="font-size:12px;color:#888;margin-top:2px">Barkod okut → öğrenci seç → ver</div>
+        </div>
+        <span style="margin-left:auto;font-size:20px;color:#ccc">›</span>
+      </div>
+
+      <div onclick="closeModal('modal-qrselect');openQRScanner('take')" style="display:flex;align-items:center;gap:14px;padding:14px 16px;background:#fff5e8;border-radius:14px;cursor:pointer;border:1.5px solid #f5d0a9">
+        <div style="width:44px;height:44px;border-radius:12px;background:#f97316;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/></svg>
+        </div>
+        <div>
+          <div style="font-size:15px;font-weight:800;color:#1a1a1a">İade Al</div>
+          <div style="font-size:12px;color:#888;margin-top:2px">Barkod okut → kitabı iade al</div>
+        </div>
+        <span style="margin-left:auto;font-size:20px;color:#ccc">›</span>
+      </div>
+
+      <div onclick="closeModal('modal-qrselect');openQRScanner('addBook')" style="display:flex;align-items:center;gap:14px;padding:14px 16px;background:#eff6ff;border-radius:14px;cursor:pointer;border:1.5px solid #bfdbfe">
+        <div style="width:44px;height:44px;border-radius:12px;background:#3b82f6;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><path d="M14 14h3v3M17 14h3M14 17v3"/></svg>
+        </div>
+        <div>
+          <div style="font-size:15px;font-weight:800;color:#1a1a1a">Kitap Ekle</div>
+          <div style="font-size:12px;color:#888;margin-top:2px">Barkod okut → kitap bilgilerini gir</div>
+        </div>
+        <span style="margin-left:auto;font-size:20px;color:#ccc">›</span>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-lendaction">
+  <div class="modal">
+    <div class="modal-title">🔄 Ödünç İşlemi <button class="modal-close" onclick="closeModal('modal-lendaction')">✕</button></div>
+    <div id="lendBookInfo" style="background:var(--bg);border-radius:12px;padding:14px;margin-bottom:4px"></div>
+    <div class="lend-actions">
+      <div class="lend-action-btn give" onclick="startLend('give')">
+        <div class="action-icon">📤</div>
+        <div class="action-label">Ödünç Ver</div>
+        <div class="action-sub">Öğrenciye ver</div>
+      </div>
+      <div class="lend-action-btn take" onclick="startLend('take')">
+        <div class="action-icon">📥</div>
+        <div class="action-label">Ödünç Al</div>
+        <div class="action-sub">Geri teslim al</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-givestudent">
+  <div class="modal">
+    <div class="modal-title">📤 Öğrenci Seç <button class="modal-close" onclick="closeModal('modal-givestudent')">✕</button></div>
+    <div class="search-box" style="margin-bottom:10px">
+      <span class="search-icon">🔍</span>
+      <input type="text" id="studentSearchInput" placeholder="Öğrenci ara..." oninput="renderStudentPicker()">
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
+      <div>
+        <label class="form-label">Verme Tarihi</label>
+        <input class="form-input" type="date" id="giveDateQR" readonly style="background:#c8e6d4;color:var(--primary);font-weight:700;cursor:default">
+      </div>
+      <div>
+        <label class="form-label">Teslim Tarihi</label>
+        <input class="form-input" type="date" id="dueDateInput">
+
+      </div>
+    </div>
+    <div id="studentPicker" style="max-height:220px;overflow-y:auto"></div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-takebook">
+  <div class="modal">
+    <div class="modal-title">📥 İade Al <button class="modal-close" onclick="closeModal('modal-takebook')">✕</button></div>
+    <p style="font-size:13px;color:var(--text2);margin-bottom:12px">Bu kitabı ödünç alan öğrenciler:</p>
+    <div id="takePicker" style="max-height:300px;overflow-y:auto"></div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-confirm">
+  <div class="modal modal-center" style="max-width:360px">
+    <div class="modal-title" id="confirmTitle">Emin misiniz? <button class="modal-close" onclick="closeModal('modal-confirm')">✕</button></div>
+    <p id="confirmMsg" style="font-size:14px;color:var(--text2);margin-bottom:18px"></p>
+    <div style="display:flex;gap:10px">
+      <button class="btn btn-ghost btn-full" onclick="closeModal('modal-confirm')">İptal</button>
+      <button class="btn btn-danger btn-full" id="confirmOkBtn">Sil</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ═══════════════ STATE ═══════════════
+let state = JSON.parse(localStorage.getItem('kutuphane') || 'null') || {
+  school: { name: 'Okul Kütüphanesi', sub: 'Kütüphane Yönetim Sistemi' },
+  classes: [],        // {id, name, teacher}
+  students: [],       // {id, classId, name, no}
+  books: [],          // {id, title, author, isbn, qty}
+  lendings: [],       // {id, bookId, studentId, type:'give'|'take_record', date, dueDate, returnDate}
+};
+let currentClassId = null;
+let qrStream = null;
+let qrMode = null; // 'addBook' | 'lend'
+let currentLendBookId = null;
+let currentLendType = null;
+let lendTab = 'verilenler';
+let lendSearchQuery = '';
+
+function save() { localStorage.setItem('kutuphane', JSON.stringify(state)); }
+function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2,6); }
+function fmt(dateStr) {
+  if (!dateStr) return '-';
+  const [y, m, d] = dateStr.split('-');
+  return `${d}.${m}.${y}`;
+}
+// Akıllı arama: önce baş harfi eşleşenler, sonra içinde geçenler
+function smartSearch(items, q, keyFn) {
+  if (!q) return items;
+  const lower = q.toLowerCase();
+  const starts = items.filter(i => keyFn(i).toLowerCase().startsWith(lower));
+  const contains = items.filter(i => !keyFn(i).toLowerCase().startsWith(lower) && keyFn(i).toLowerCase().includes(lower));
+  return [...starts, ...contains];
+}
+
+// ═══════════════ INIT ═══════════════
+
+function applyColor(key, value) {
+  document.documentElement.style.setProperty('--clr-' + key, value);
+  const prev = document.getElementById('prev-clr-' + key);
+  if (prev) prev.style.background = value;
+  if (!state.settings) state.settings = {};
+  if (!state.settings.colors) state.settings.colors = {};
+  state.settings.colors[key] = value;
+  save();
+}
+
+function resetColors() {
+  const defaults = { header:'#4a7c8e', bg:'#f7f3ec', item:'#222222', sub:'#888888' };
+  Object.entries(defaults).forEach(([k,v]) => applyColor(k, v));
+  // picker'ları güncelle
+  ['header','bg','item','sub'].forEach(k => {
+    const inp = document.getElementById('clr-' + k);
+    if (inp) inp.value = defaults[k];
+  });
+}
+
+function applyAllColors() {
+  const colors = state.settings?.colors || {};
+  const defaults = { header:'#4a7c8e', bg:'#f7f3ec', item:'#222222', sub:'#888888' };
+  ['header','bg','item','sub'].forEach(k => {
+    document.documentElement.style.setProperty('--clr-' + k, colors[k] || defaults[k]);
+  });
+}
+
+function toggleSetting(key) {
+  if (!state.settings) state.settings = {};
+  state.settings[key] = !state.settings[key];
+  save();
+  updateSettingToggle(key);
+}
+
+function updateSettingToggle(key) {
+  const isOn = !!state.settings?.[key];
+  const toggle = document.getElementById('toggle-' + key);
+  const knob = document.getElementById('knob-' + key);
+  if (!toggle || !knob) return;
+  toggle.style.background = isOn ? '#3a8a64' : '#ccc';
+  knob.style.right = isOn ? '3px' : 'auto';
+  knob.style.left = isOn ? 'auto' : '3px';
+}
+
+function updateAllSettingToggles() {
+  ['overdueAlert', 'dueTodayAlert'].forEach(updateSettingToggle);
+  updateBipToggle();
+  checkNotificationPermission();
+}
+
+function checkNotificationPermission() {
+  const statusEl = document.getElementById('notif-permission-status');
+  const iconEl = document.getElementById('notif-permission-icon');
+  if (!statusEl) return;
+  if (!('Notification' in window)) {
+    statusEl.textContent = 'Bu tarayıcıda desteklenmiyor';
+    if (iconEl) iconEl.textContent = '❌';
+    return;
+  }
+  if (Notification.permission === 'granted') {
+    statusEl.textContent = 'İzin verildi ✓';
+    if (iconEl) iconEl.textContent = '🔔';
+  } else if (Notification.permission === 'denied') {
+    statusEl.textContent = 'İzin reddedildi — tarayıcı ayarlarından açın';
+    if (iconEl) iconEl.textContent = '🔕';
+  } else {
+    statusEl.textContent = 'İzin vermek için tıklayın';
+    if (iconEl) iconEl.textContent = '🔔';
+  }
+}
+
+function requestNotificationPermission() {
+  if (!('Notification' in window)) return;
+  if (Notification.permission === 'granted') {
+    showToast('✅ Bildirim izni zaten verilmiş!');
+    return;
+  }
+  Notification.requestPermission().then(permission => {
+    checkNotificationPermission();
+    if (permission === 'granted') {
+      showToast('✅ Bildirim izni verildi!');
+      new Notification('Kütüphane Yönetimi', {
+        body: 'Bildirimler aktif! Vadesi geçen kitaplar için uyarı alacaksınız.',
+        icon: ''
+      });
+    }
+  });
+}
+
+function sendOverdueNotification(count) {
+  if (Notification.permission !== 'granted') return;
+  new Notification('⚠️ Vadesi Geçmiş Kitaplar', {
+    body: count + ' kitabın iade tarihi geçmiş! Uygulamayı açın.',
+    icon: ''
+  });
+}
+
+function toggleBipFromScanner() {
+  if (!state.settings) state.settings = {};
+  state.settings.bipOff = !state.settings.bipOff;
+  save();
+  const btn = document.getElementById('scannerBipBtn');
+  if (btn) btn.textContent = state.settings.bipOff ? '🔇' : '🔊';
+}
+
+function updateScannerBipBtn() {
+  const btn = document.getElementById('scannerBipBtn');
+  if (btn) btn.textContent = state.settings?.bipOff ? '🔇' : '🔊';
+}
+
+function toggleBip() {
+  if (!state.settings) state.settings = {};
+  state.settings.bipOff = !state.settings.bipOff;
+  save();
+  updateBipToggle();
+  updateAllSettingToggles();
+}
+
+function updateBipToggle() {
+  const isOn = !state.settings?.bipOff;
+  const toggle = document.getElementById('bip-toggle');
+  const knob = document.getElementById('bip-knob');
+  if (!toggle || !knob) return;
+  toggle.style.background = isOn ? '#3a8a64' : '#ccc';
+  knob.style.right = isOn ? '3px' : 'auto';
+  knob.style.left = isOn ? 'auto' : '3px';
+}
+
+function setDueDate(inputId, days) {
+  const d = new Date();
+  d.setDate(d.getDate() + days);
+  document.getElementById(inputId).value = d.toISOString().split('T')[0];
+}
+
+// ═══════════════ AYARLAR ═══════════════
+const fontSizes = {
+  small:   { title: 13, sub: 11, item: 12, stat: 16, folder: 13 },
+  normal:  { title: 15, sub: 12, item: 14, stat: 18, folder: 15 },
+  large:   { title: 17, sub: 13, item: 16, stat: 20, folder: 17 },
+  xlarge:  { title: 19, sub: 14, item: 18, stat: 22, folder: 19 }
+};
+
+function applyFontSize(size) {
+  const fs = fontSizes[size] || fontSizes.normal;
+  document.documentElement.style.setProperty('--fs-title',  fs.title  + 'px');
+  document.documentElement.style.setProperty('--fs-sub',    fs.sub    + 'px');
+  document.documentElement.style.setProperty('--fs-item',   fs.item   + 'px');
+  document.documentElement.style.setProperty('--fs-stat',   fs.stat   + 'px');
+  document.documentElement.style.setProperty('--fs-folder', fs.folder + 'px');
+}
+
+function setFontSize(size) {
+  if (!state.settings) state.settings = {};
+  state.settings.fontSize = size;
+  applyFontSize(size);
+  updateFontButtons(size);
+  save();
+}
+
+function updateFontButtons(size) {
+  ['small','normal','large','xlarge'].forEach(s => {
+    const btn = document.getElementById('fs-' + s);
+    if (!btn) return;
+    btn.style.border = s === size ? '2px solid #3a8a64' : '2px solid transparent';
+    btn.style.background = s === size ? '#e8f5ee' : '#fff';
+  });
+}
+
+function openSettingsModal() {
+  document.getElementById('settingsSchoolName').value = state.school.name || '';
+  document.getElementById('settingsSchoolSub').value = state.school.sub || '';
+  const days = state.settings?.defaultDays || 14;
+  document.getElementById('settingsDaysDisplay').textContent = days + ' gün';
+  const fontSize = state.settings?.fontSize || 'normal';
+  updateFontButtons(fontSize);
+  updateBipToggle();
+  // Renk picker'ları güncelle
+  const colors = state.settings?.colors || {};
+  const defaults = { header:'#4a7c8e', bg:'#f7f3ec', item:'#222222', sub:'#888888' };
+  ['header','bg','item','sub'].forEach(k => {
+    const val = colors[k] || defaults[k];
+    const inp = document.getElementById('clr-' + k);
+    const prev = document.getElementById('prev-clr-' + k);
+    if (inp) inp.value = val;
+    if (prev) prev.style.background = val;
+  });
+}
+
+function changeDefaultDays(delta) {
+  if (!state.settings) state.settings = {};
+  const cur = state.settings.defaultDays || 14;
+  const next = Math.max(1, Math.min(90, cur + delta));
+  state.settings.defaultDays = next;
+  document.getElementById('settingsDaysDisplay').textContent = next + ' gün';
+}
+
+function saveSettings() {
+  const name = document.getElementById('settingsSchoolName').value.trim();
+  const sub = document.getElementById('settingsSchoolSub').value.trim();
+  if (name) state.school.name = name;
+  if (sub !== undefined) state.school.sub = sub;
+  if (!state.settings) state.settings = {};
+  save();
+  updateHeader();
+  closeInfoModal('settings');
+}
+
+function exportData() {
+  const json = JSON.stringify(state, null, 2);
+  const blob = new Blob([json], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'kutuphane-yedek-' + new Date().toISOString().split('T')[0] + '.json';
+  a.style.display = 'none';
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(() => { document.body.removeChild(a); URL.revokeObjectURL(url); }, 1000);
+  showToast('✅ Yedek dosyası indirildi!');
+}
+
+function importData(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  e.target.value = ''; // Aynı dosya tekrar seçilebilsin
+  const reader = new FileReader();
+  reader.onload = function(ev) {
+    try {
+      const imported = JSON.parse(ev.target.result);
+      if (!imported.classes || !imported.books) {
+        showToast('❌ Geçersiz yedek dosyası!');
+        return;
+      }
+      if (confirm('Mevcut tüm veriler silinecek ve yedek yüklenecek. Emin misiniz?')) {
+        Object.assign(state, imported);
+        save();
+        updateHeader();
+        renderClasses();
+        renderBooks();
+        renderLendList();
+        renderStats();
+        closeInfoModal('settings');
+        showToast('✅ Veriler başarıyla yüklendi!');
+      }
+    } catch(err) {
+      showToast('❌ Dosya okunamadı!');
+    }
+  };
+  reader.onerror = function() { showToast('❌ Dosya okunamadı!'); };
+  reader.readAsText(file);
+}
+
+function openImportModal() {
+  closeInfoModal('settings');
+  setTimeout(() => {
+    document.getElementById('importTextarea').value = '';
+    openModal('modal-import');
+  }, 300);
+}
+
+function importFromText() {
+  const text = document.getElementById('importTextarea').value.trim();
+  if (!text) { showToast('❌ Metin boş!'); return; }
+  try {
+    const imported = JSON.parse(text);
+    if (!imported.classes || !imported.books) { showToast('❌ Geçersiz yedek!'); return; }
+    if (confirm('Mevcut tüm veriler silinecek. Emin misiniz?')) {
+      Object.assign(state, imported);
+      save();
+      updateHeader();
+      renderClasses();
+      renderBooks();
+      renderLendList();
+      renderStats();
+      closeModal('modal-import');
+      showToast('✅ Veriler yüklendi!');
+    }
+  } catch(e) { showToast('❌ Geçersiz JSON!'); }
+}
+
+function openImportPicker() {
+  const input = document.getElementById('importFileInput');
+  if (input) input.click();
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  applyFontSize(state.settings?.fontSize || 'normal');
+  applyAllColors();
+  updateHeader();
+  // Varsayılan ayarlar
+  if (!state.settings) state.settings = {};
+  if (state.settings.overdueAlert === undefined) state.settings.overdueAlert = true;
+
+  // Android geri tuşu yönetimi
+  history.replaceState({ level: 0 }, '');
+  window.addEventListener('popstate', function(e) {
+    // Drawer açık mı?
+    const drawer = document.getElementById('mainDrawer');
+    if (drawer && drawer.classList.contains('open')) {
+      closeDrawer();
+      history.pushState({ level: 1 }, '');
+      return;
+    }
+    // Modal açık mı?
+    const openMod = document.querySelector('.modal-overlay.open, .info-modal.open');
+    if (openMod) {
+      openMod.classList.remove('open');
+      if (typeof stopCamera === 'function') stopCamera();
+      history.pushState({ level: 1 }, '');
+      return;
+    }
+    // Öğrenci detay açık mı? (en derin sayfa - önce kapat)
+    const studentPage = document.getElementById('page-studentdetail');
+    if (studentPage && studentPage.classList.contains('slide-in')) {
+      studentPage.classList.remove('slide-in');
+      history.pushState({ level: 2 }, '');
+      return;
+    }
+    // Kitap detay açık mı?
+    const bookPage = document.getElementById('page-bookdetail');
+    if (bookPage && bookPage.classList.contains('slide-in')) {
+      bookPage.classList.remove('slide-in');
+      history.pushState({ level: 2 }, '');
+      return;
+    }
+    // Sınıf detay açık mı?
+    const classPage = document.getElementById('page-classdetail');
+    if (classPage && classPage.classList.contains('slide-in')) {
+      classPage.classList.remove('slide-in');
+      history.pushState({ level: 2 }, '');
+      return;
+    }
+    // Ana sayfadaysak çıkışı engelle
+    history.pushState({ level: 0 }, '');
+  });
+  renderClasses();
+  renderBooks();
+  renderLendList();
+  renderStats();
+  setTimeout(checkOverdueOnOpen, 600);
+  // Default due date = 2 weeks from now
+  const d = new Date(); d.setDate(d.getDate()+14);
+  document.getElementById('dueDateInput').value = d.toISOString().split('T')[0];
+});
+
+// ═══════════════ NAV ═══════════════
+
+// ═══════════════ HEADER SEARCH ═══════════════
+let headerSearchOpen = false;
+let currentPage = 'siniflar';
+
+function toggleHeaderSearch() {
+  const bar = document.getElementById('headerSearchBar');
+  const input = document.getElementById('headerSearchInput');
+  headerSearchOpen = !headerSearchOpen;
+  bar.style.display = headerSearchOpen ? 'block' : 'none';
+  if (headerSearchOpen) {
+    input.value = '';
+    onHeaderSearch();
+    setTimeout(() => input.focus(), 100);
+  } else {
+    clearHeaderSearch();
+  }
+}
+
+function onHeaderSearch() {
+  const val = document.getElementById('headerSearchInput').value;
+  const clearBtn = document.getElementById('headerSearchClear');
+  clearBtn.style.display = val ? 'block' : 'none';
+  if (currentPage === 'siniflar') {
+    document.getElementById('classSearch').value = val;
+    renderClasses();
+  } else if (currentPage === 'kitaplar') {
+    document.getElementById('bookSearch').value = val;
+    renderBooks();
+  } else if (currentPage === 'odunc') {
+    lendSearchQuery = val;
+    renderLendList();
+  }
+}
+
+function clearHeaderSearch() {
+  document.getElementById('headerSearchInput').value = '';
+  document.getElementById('headerSearchClear').style.display = 'none';
+  document.getElementById('classSearch').value = '';
+  document.getElementById('bookSearch').value = '';
+  lendSearchQuery = '';
+  renderClasses();
+  renderBooks();
+  renderLendList();
+}
+
+function showPage(name, btn) {
+  // Close any open slide pages first
+  document.querySelectorAll('.slide-page').forEach(p => p.classList.remove('slide-in'));
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('page-'+name).classList.add('active');
+  btn.classList.add('active');
+  currentPage = name;
+  // Arama çubuğu: sadece sınıflar ve kitaplarda göster
+  const searchBtn = document.getElementById('headerSearchBtn');
+  if (searchBtn) searchBtn.style.opacity = (name==='siniflar'||name==='kitaplar'||name==='odunc') ? '1' : '0.3';
+  // Sayfa değişince aramayı kapat ve temizle
+  if (headerSearchOpen) { toggleHeaderSearch(); }
+  clearHeaderSearch();
+  if (name !== 'siniflar') { openClassFolders.clear(); renderClasses(); }
+  if (name !== 'kitaplar') { openBookFolders.clear(); }
+  if (name !== 'odunc') { openFolders.clear(); lendVisible = {}; }
+  if (name === 'istatistik') renderStats();
+  if (name === 'odunc') renderLendList();
+  if (name === 'kitaplar') renderBooks();
+}
+
+// ═══════════════ SCHOOL ═══════════════
+function updateHeader() {
+  document.getElementById('schoolNameDisplay').textContent = state.school.name.toUpperCase();
+  const dn = document.getElementById('drawerSchoolName');
+  if (dn) dn.textContent = state.school.name.toUpperCase();
+  document.getElementById('schoolSubDisplay').textContent = state.school.sub || 'Kütüphane Yönetim Sistemi';
+}
+function openSchoolEdit() {
+  document.getElementById('schoolNameInput').value = state.school.name;
+  document.getElementById('schoolSubInput').value = state.school.sub || '';
+  openModal('modal-school');
+}
+function saveSchoolName() {
+  const n = document.getElementById('schoolNameInput').value.trim();
+  if (!n) return alert('Okul adı boş olamaz!');
+  state.school.name = n;
+  state.school.sub = document.getElementById('schoolSubInput').value.trim() || 'Kütüphane Yönetim Sistemi';
+  save(); updateHeader(); closeModal('modal-school');
+}
+
+// Long press for header edit
+let longPressTimer = null;
+function startLongPress() {
+  longPressTimer = setTimeout(() => {
+    openSchoolEdit();
+    // Visual feedback
+    const t = document.getElementById('headerTitle');
+    t.style.opacity = '0.6';
+    setTimeout(() => t.style.opacity = '1', 300);
+  }, 600);
+}
+function cancelLongPress() {
+  clearTimeout(longPressTimer);
+  longPressTimer = null;
+}
+
+// ═══════════════ CLASSES ═══════════════
+function openAddClass() {
+  document.getElementById('classNameInput').value = '';
+  document.getElementById('modal-addclass-title').textContent = '🏫 Sınıf Ekle';
+  document.getElementById('saveClassBtn').onclick = saveClass;
+  openModal('modal-addclass');
+}
+function openEditClass(id) {
+  const cls = state.classes.find(c => c.id === id);
+  document.getElementById('classNameInput').value = cls.name;
+  document.getElementById('modal-addclass-title').textContent = '✏️ Sınıfı Düzenle';
+  document.getElementById('saveClassBtn').onclick = () => {
+    const name = document.getElementById('classNameInput').value.trim();
+    if (!name) return alert('Sınıf adı boş olamaz!');
+    cls.name = name;
+    save(); renderClasses(); closeModal('modal-addclass');
+  };
+  openModal('modal-addclass');
+}
+function saveClass() {
+  const name = document.getElementById('classNameInput').value.trim();
+  if (!name) return alert('Sınıf adı boş olamaz!');
+  state.classes.push({ id: uid(), name, teacher: '' });
+  save(); renderClasses(); closeModal('modal-addclass');
+}
+function openEditStudent(id) {
+  const s = state.students.find(st => st.id === id);
+  document.getElementById('studentNameInput').value = s.name;
+  document.getElementById('studentNoInput').value = s.no || '';
+  document.getElementById('modal-addstudent-title').textContent = '✏️ Öğrenciyi Düzenle';
+  document.getElementById('saveStudentBtn').onclick = () => {
+    const name = document.getElementById('studentNameInput').value.trim();
+    if (!name) return alert('Öğrenci adı boş olamaz!');
+    s.name = name;
+    s.no = document.getElementById('studentNoInput').value.trim();
+    openClassFolders.add(s.classId);
+    save(); renderClasses(); closeModal('modal-addstudent');
+  };
+  openModal('modal-addstudent');
+}
+let openClassFolders = new Set();
+function toggleClassFolder(classId) {
+  const container = document.getElementById('classList');
+  if (!container) return;
+  const body = container.querySelector(`.class-folder-body[data-id="${classId}"]`);
+  const arrow = container.querySelector(`.class-folder-arrow[data-id="${classId}"]`);
+  const header = container.querySelector(`.class-folder-header[data-id="${classId}"]`);
+  const icon = container.querySelector(`.class-folder-icon[data-id="${classId}"]`);
+  if (!body) return;
+  const isOpen = openClassFolders.has(classId);
+  if (isOpen) {
+    body.style.height = body.scrollHeight + 'px';
+    requestAnimationFrame(() => { body.style.height = '0px'; body.style.opacity = '0'; });
+    openClassFolders.delete(classId);
+    arrow.classList.remove('open');
+    if (header) header.style.background = 'white';
+    if (icon) icon.textContent = '📁';
+  } else {
+    openClassFolders.add(classId);
+    body.style.height = '0px'; body.style.opacity = '0';
+    requestAnimationFrame(() => {
+      body.style.height = body.scrollHeight + 'px'; body.style.opacity = '1';
+      body.addEventListener('transitionend', () => { body.style.height = 'auto'; }, { once: true });
+    });
+    arrow.classList.add('open');
+    if (header) header.style.background = '#c8e6d4';
+    if (icon) icon.textContent = '📂';
+  }
+}
+function renderClasses() {
+  const el = document.getElementById('classList');
+  if (!state.classes.length) {
+    el.innerHTML = `<div class="empty-state"><div class="empty-icon">🏫</div><p>Henüz sınıf eklenmedi.</p></div>`;
+    return;
+  }
+  const q = (document.getElementById('classSearch')?.value || '').toLowerCase();
+  let filtered, studentMatches = {};
+  if (q) {
+    const matchedStudents = state.students.filter(s => s.name.toLowerCase().includes(q));
+    matchedStudents.forEach(s => { studentMatches[s.classId] = studentMatches[s.classId] || []; studentMatches[s.classId].push(s.id); });
+    const classIds = new Set([
+      ...state.classes.filter(c => c.name.toLowerCase().includes(q)).map(c => c.id),
+      ...Object.keys(studentMatches)
+    ]);
+    filtered = state.classes.filter(c => classIds.has(c.id));
+  } else {
+    filtered = state.classes;
+    studentMatches = {};
+  }
+  if (!filtered.length) { el.innerHTML = `<div class="empty-state"><div class="empty-icon">🔍</div><p>Bulunamadı.</p></div>`; return; }
+  el.innerHTML = filtered.map(c => {
+    // Öğrenci araması varsa sadece eşleşenleri göster, yoksa hepsini
+    const allStudents = state.students.filter(s => s.classId === c.id);
+    const students = (q && studentMatches[c.id]) ? allStudents.filter(s => studentMatches[c.id].includes(s.id)) : allStudents;
+    const isOpen = openClassFolders.has(c.id);
+    return `<div class="class-folder-card" style="${isOpen?'border-color:#2d6a4f;border-left-color:#1b4332;box-shadow:0 2px 14px rgba(27,67,50,0.18)':''}">
+      <div class="list-item class-folder-header" data-id="${c.id}" style="cursor:pointer;background:${isOpen?'#c8e6d4':'#fafdf8'};border-radius:12px 12px ${isOpen?'0 0':'12px 12px'};transition:background 0.2s"
+        onclick="toggleClassFolder('${c.id}')"
+        onmousedown="startClassLongPress('${c.id}')" onmouseup="cancelClassLongPress()" onmouseleave="cancelClassLongPress()"
+        ontouchstart="startClassLongPress('${c.id}')" ontouchend="cancelClassLongPress()" ontouchcancel="cancelClassLongPress()">
+        <div class="item-icon class-folder-icon" data-id="${c.id}" style="width:32px;height:32px;border-radius:9px;background:#d1f0e8;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-right:12px;order:1">${isOpen?'<svg width=\"22\" height=\"22\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"#0e9076\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z\"/><path d=\"M2 10h20\"/></svg>':'<svg width=\"22\" height=\"22\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"#0e9076\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z\"/></svg>'}</div>
+        <div class="item-info">
+          <div class="item-title" style="font-weight:700;color:#1b4332">${c.name}</div>
+          <div class="item-sub">${students.length} öğrenci</div>
+        </div>
+        <span class="class-folder-arrow folder-arrow ${isOpen?'open':''}" data-id="${c.id}" style="font-size:22px;color:#1b4332;font-weight:700;margin-left:auto;flex-shrink:0">›</span>
+      </div>
+      <div class="class-folder-body folder-body" data-id="${c.id}" style="height:${isOpen?'auto':'0'};opacity:${isOpen?'1':'0'}">
+        ${students.length ? students.map(s => {
+          const activeLends = state.lendings.filter(l => l.studentId === s.id && !l.returnDate && l.type === 'give').length;
+          return `<div class="list-item" style="background:#ffffff;padding-left:16px;border-top:1px solid var(--border);cursor:pointer"
+            onclick="openStudentDetail('${s.id}')"
+            onmousedown="startStudentLongPress('${s.id}')" onmouseup="cancelStudentLongPress()" onmouseleave="cancelStudentLongPress()"
+            ontouchstart="startStudentLongPress('${s.id}')" ontouchend="cancelStudentLongPress()" ontouchcancel="cancelStudentLongPress()">
+            <div style="width:32px;height:32px;border-radius:9px;background:#d1f0e8;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-right:12px;order:1"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#0e9076" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg></div>
+            <div class="item-info">
+              <div class="item-title" style="font-size:var(--fs-item,13px)">${s.name}</div>
+              <div class="item-sub">${s.no?'No: '+s.no+' · ':''}${activeLends?'<span style="color:var(--danger);font-weight:700">'+activeLends+' kitap zimmetinde</span>':'Kitap yok'}</div>
+            </div>
+            <span style="color:#1b4332;font-size:20px;font-weight:700;order:3;flex-shrink:0;margin-left:auto">›</span>
+          </div>`;
+        }).join('') : `<div style="padding:14px 24px;font-size:13px;color:var(--text2);border-top:1px solid var(--border)">Bu sınıfta öğrenci yok.</div>`}
+        <div style="padding:10px 16px;border-top:1px solid rgba(27,67,50,0.1);background:#c8e6d4;border-radius:0 0 12px 12px">
+          <button class="btn btn-full btn-sm" style="background:#9e9e9e;color:#fff;font-weight:700" onclick="event.stopPropagation();currentClassId='${c.id}';openAddStudent()">+ Öğrenci Ekle</button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+let classLongPressTimer = null;
+let actionSheetEditFn = null;
+let actionSheetDeleteFn = null;
+function openActionSheet(title, editFn, deleteFn) {
+  document.getElementById('actionSheetTitle').textContent = title;
+  actionSheetEditFn = editFn;
+  actionSheetDeleteFn = deleteFn;
+  document.getElementById('actionSheet').classList.add('open');
+}
+function closeActionSheet() {
+  document.getElementById('actionSheet').classList.remove('open');
+}
+function startClassLongPress(id) {
+  classLongPressTimer = setTimeout(() => {
+    const cls = state.classes.find(c => c.id === id);
+    openActionSheet(cls ? cls.name : 'Sınıf',
+      () => openEditClass(id),
+      () => deleteClass(id)
+    );
+  }, 700);
+}
+function cancelClassLongPress() { clearTimeout(classLongPressTimer); classLongPressTimer = null; }
+let studentLongPressTimer = null;
+function startStudentLongPress(id) {
+  studentLongPressTimer = setTimeout(() => {
+    const s = state.students.find(st => st.id === id);
+    openActionSheet(s ? s.name : 'Öğrenci',
+      () => openEditStudent(id),
+      () => deleteStudent(id)
+    );
+  }, 700);
+}
+function cancelStudentLongPress() { clearTimeout(studentLongPressTimer); studentLongPressTimer = null; }
+function deleteClass(id) {
+  confirmAction('Sınıfı Sil', 'Bu sınıf ve öğrencileri silinecek. Emin misiniz?', () => {
+    state.classes = state.classes.filter(c => c.id !== id);
+    state.students = state.students.filter(s => s.classId !== id);
+    save(); renderClasses();
+  });
+}
+
+// ═══════════════ STUDENTS ═══════════════
+function openClassDetail(classId) {
+  currentClassId = classId;
+  const cls = state.classes.find(c => c.id === classId);
+  document.getElementById('classDetailTitle').textContent = cls.name + ' Sınıfı';
+  renderStudentList();
+  const page = document.getElementById('page-classdetail');
+  requestAnimationFrame(() => page.classList.add('slide-in'));
+  history.pushState({ level: 2 }, '');
+}
+function closeClassDetail() {
+  const page = document.getElementById('page-classdetail');
+  page.classList.remove('slide-in');
+  renderClasses();
+}
+function renderStudentList() {
+  const el = document.getElementById('studentList');
+  const students = state.students.filter(s => s.classId === currentClassId);
+  if (!students.length) {
+    el.innerHTML = `<div class="empty-state" style="padding:20px"><div class="empty-icon">👤</div><p>Öğrenci eklenmedi.</p></div>`;
+    return;
+  }
+  el.innerHTML = students.map(s => {
+    const active = state.lendings.filter(l => l.studentId === s.id && !l.returnDate && l.type === 'give').length;
+    return `<div class="card"
+      onmousedown="startStudentLongPress('${s.id}')" onmouseup="cancelStudentLongPress()" onmouseleave="cancelStudentLongPress()"
+      ontouchstart="startStudentLongPress('${s.id}')" ontouchend="cancelStudentLongPress()" ontouchcancel="cancelStudentLongPress()">
+      <div class="list-item" style="cursor:pointer" onclick="openStudentDetail('${s.id}')">
+        <div class="item-icon" style="background:#d1f0e8;border-radius:12px"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#0e9076" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg></div>
+        <div class="item-info">
+          <div class="item-title">${s.name}</div>
+          <div class="item-sub">${s.no ? 'No: '+s.no+' · ' : ''}${active ? '<span style="color:var(--danger);font-weight:700">'+active+' kitap zimmetinde</span>' : 'Kitap yok'}</div>
+        </div>
+        <span style="color:var(--text2);font-size:18px">›</span>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+let currentStudentId = null;
+
+const openBookFolders = new Set();
+
+function toggleBookFolder(bookId) {
+  const body = document.getElementById('book-body-' + bookId);
+  const arrow = document.getElementById('book-arrow-' + bookId);
+  if (!body) return;
+
+  if (openBookFolders.has(bookId)) {
+    // Kapat animasyonu
+    body.style.height = body.scrollHeight + 'px';
+    body.style.overflow = 'hidden';
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        body.style.height = '0';
+        body.style.opacity = '0';
+      });
+    });
+    if (arrow) arrow.style.transform = 'rotate(0deg)';
+    const hdr = document.getElementById('book-header-' + bookId);
+    if (hdr) { hdr.style.background = 'transparent'; hdr.style.borderRadius = '14px'; }
+    openBookFolders.delete(bookId);
+  } else {
+    // Aç animasyonu
+    openBookFolders.add(bookId);
+    body.innerHTML = buildBookDetailHtml(bookId);
+    body.style.overflow = 'hidden';
+    body.style.height = '0';
+    body.style.opacity = '0';
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        body.style.height = body.scrollHeight + 'px';
+        body.style.opacity = '1';
+      });
+    });
+    body.addEventListener('transitionend', () => {
+      if (openBookFolders.has(bookId)) body.style.height = 'auto';
+    }, { once: true });
+    if (arrow) arrow.style.transform = 'rotate(90deg)';
+    const hdr = document.getElementById('book-header-' + bookId);
+    if (hdr) { hdr.style.background = '#c8e6d4'; hdr.style.borderRadius = '14px 14px 0 0'; }
+  }
+}
+
+function buildBookDetailHtml(bookId) {
+  const b = state.books.find(b => b.id === bookId);
+  if (!b) return '';
+  const activeLends = state.lendings.filter(l => l.bookId === b.id && !l.returnDate && l.type === 'give');
+  const pastLends = state.lendings.filter(l => l.bookId === b.id && l.returnDate && l.type === 'give');
+  let html = '<div style="padding:10px 14px 14px">';
+  if (activeLends.length) {
+    html += `<div style="font-size:11px;font-weight:700;color:#dc2626;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px">⚠️ Şu An Okuyor (${activeLends.length})</div>`;
+    html += `<div style="background:#ffffff;border-radius:10px;border:1px solid rgba(0,0,0,0.07);margin-bottom:8px">${activeLends.map((l,i) => {
+      const student = state.students.find(s => s.id === l.studentId);
+      const cls = student ? state.classes.find(c => c.id === student.classId) : null;
+      const overdue = l.dueDate && new Date(l.dueDate) < new Date();
+      const dueStr = l.dueDate ? new Date(l.dueDate).toLocaleDateString('tr-TR') : '—';
+      return `<div style="display:flex;align-items:center;padding:8px 12px;${i>0?'border-top:1px solid rgba(0,0,0,0.06)':''}cursor:pointer;background:${overdue?'#fff5f5':'transparent'}" onclick="openStudentDetail('${student?student.id:''}')">
+        <div style="width:28px;height:28px;border-radius:8px;background:#d1f0e8;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-right:10px">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#0e9076" stroke-width="2.2"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+        </div>
+        <div style="flex:1;min-width:0">
+          <div style="font-weight:700;font-size:13px;color:#222">${student?student.name:'Bilinmeyen'}</div>
+          <div style="font-size:11px;color:#888">${cls?cls.name:''} · İade: ${dueStr}</div>
+        </div>
+        ${overdue?'<span style="font-size:10px;font-weight:700;color:#dc2626">Gecikmiş</span>':'<span style="font-size:13px;color:#ccc">›</span>'}
+      </div>`;
+    }).join('')}</div>`;
+  } else {
+    html += `<div style="text-align:center;padding:10px;color:#3a8a64;font-weight:700;font-size:13px;background:#f0faf5;border-radius:10px;margin-bottom:8px">✅ Tüm nüshalar rafta mevcut</div>`;
+  }
+  if (pastLends.length) {
+    const uid = b.id + '-past';
+    html += `<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+      <div style="font-size:11px;font-weight:700;color:#aaa;text-transform:uppercase;letter-spacing:0.5px">📖 Daha Önce Okuyanlar (${pastLends.length})</div>
+      <button onclick="togglePastLends('${uid}')" id="past-btn-${uid}"
+        style="font-size:11px;font-weight:700;color:#3a8a64;background:#e8f5ee;border:none;border-radius:6px;padding:3px 10px;cursor:pointer;font-family:'Nunito',sans-serif">
+        Tümü
+      </button>
+    </div>`;
+    const rows = pastLends.slice().reverse().map((l,i) => {
+      const student = state.students.find(s => s.id === l.studentId);
+      const cls = student ? state.classes.find(c => c.id === student.classId) : null;
+      const retStr = l.returnDate ? new Date(l.returnDate).toLocaleDateString('tr-TR') : '—';
+      return `<div style="display:flex;align-items:center;padding:8px 12px;${i>0?'border-top:1px solid rgba(0,0,0,0.06)':''}">
+        <div style="width:28px;height:28px;border-radius:8px;background:#f0f0f0;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-right:10px">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#aaa" stroke-width="2.2"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+        </div>
+        <div style="flex:1;min-width:0">
+          <div style="font-weight:600;font-size:13px;color:#666">${student?student.name:'Bilinmeyen'}</div>
+          <div style="font-size:11px;color:#bbb">${cls?cls.name:''} · İade: ${retStr}</div>
+        </div>
+      </div>`;
+    }).join('');
+    html += `<div id="past-body-${uid}" style="overflow:hidden;transition:height 0.32s cubic-bezier(0.4,0,0.2,1),opacity 0.28s ease;height:0;opacity:0">
+      <div style="background:#ffffff;border-radius:10px;border:1px solid rgba(0,0,0,0.07)">${rows}</div>
+    </div>`;
+  }
+  html += '</div>';
+  return html;
+}
+
+function togglePastLends(uid) {
+  const body = document.getElementById('past-body-' + uid);
+  const btn  = document.getElementById('past-btn-' + uid);
+  if (!body) return;
+  const isOpen = body.style.height !== '0px' && body.style.height !== '0' && body.style.opacity === '1';
+  if (isOpen) {
+    body.style.height = body.scrollHeight + 'px';
+    body.style.overflow = 'hidden';
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      body.style.height = '0';
+      body.style.opacity = '0';
+    }));
+    if (btn) { btn.textContent = 'Tümü'; btn.style.background = '#e8f5ee'; btn.style.color = '#3a8a64'; }
+  } else {
+    body.style.overflow = 'hidden';
+    body.style.height = '0';
+    body.style.opacity = '0';
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      body.style.height = body.scrollHeight + 'px';
+      body.style.opacity = '1';
+    }));
+    body.addEventListener('transitionend', () => { body.style.height = 'auto'; }, { once: true });
+    if (btn) { btn.textContent = 'Gizle'; btn.style.background = '#fde8e8'; btn.style.color = '#dc2626'; }
+  }
+}
+
+function openBookDetail(bookId) {
+  const b = state.books.find(b => b.id === bookId);
+  if (!b) return;
+  const lentCount = state.lendings.filter(l => l.bookId === b.id && !l.returnDate && l.type === 'give').length;
+  const avail = b.qty - lentCount;
+  document.getElementById('bookDetailTitle').textContent = b.title;
+  document.getElementById('bookDetailSub').textContent = (b.author || 'Yazar belirtilmedi') + (b.isbn ? ' · ' + b.isbn : '') + ' · ' + avail + '/' + b.qty + ' mevcut';
+
+  const activeLends = state.lendings.filter(l => l.bookId === b.id && !l.returnDate && l.type === 'give');
+  const pastLends = state.lendings.filter(l => l.bookId === b.id && l.returnDate && l.type === 'give');
+
+  let html = '';
+
+  if (activeLends.length) {
+    html += `<div style="font-size:12px;font-weight:700;color:#dc2626;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px">⚠️ Şu An Okuyor (${activeLends.length})</div>`;
+    html += `<div class="card" style="margin-bottom:12px">${activeLends.map((l,i) => {
+      const student = state.students.find(s => s.id === l.studentId);
+      const cls = student ? state.classes.find(c => c.id === student.classId) : null;
+      const overdue = l.dueDate && new Date(l.dueDate) < new Date();
+      const dueStr = l.dueDate ? new Date(l.dueDate).toLocaleDateString('tr-TR') : '—';
+      return `<div class="list-item" style="background:${overdue?'#fff5f5':'#fafdf8'};${i===activeLends.length-1?'border-bottom:none':''};cursor:pointer" onclick="openStudentDetail('${student?student.id:''}')">
+        <div style="width:32px;height:32px;border-radius:9px;background:#d1f0e8;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-right:12px">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#0e9076" stroke-width="2.2"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+        </div>
+        <div style="flex:1;min-width:0">
+          <div style="font-weight:700;font-size:14px;color:#222">${student?student.name:'Bilinmeyen'}</div>
+          <div style="font-size:12px;color:#888">${cls?cls.name:''} · İade: ${dueStr}</div>
+        </div>
+        ${overdue?'<span style="font-size:11px;font-weight:700;color:#dc2626;flex-shrink:0">Gecikmiş</span>':'<span style="font-size:11px;color:#888;flex-shrink:0">›</span>'}
+      </div>`;
+    }).join('')}</div>`;
+  } else {
+    html += `<div class="card" style="margin-bottom:12px;padding:16px;text-align:center;color:#3a8a64;font-weight:700;font-size:14px">✅ Tüm nüshalar rafta mevcut</div>`;
+  }
+
+  if (pastLends.length) {
+    html += `<div style="font-size:12px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px">📖 Daha Önce Okuyanlar (${pastLends.length})</div>`;
+    html += `<div class="card">${pastLends.slice().reverse().map((l,i) => {
+      const student = state.students.find(s => s.id === l.studentId);
+      const cls = student ? state.classes.find(c => c.id === student.classId) : null;
+      const retStr = l.returnDate ? new Date(l.returnDate).toLocaleDateString('tr-TR') : '—';
+      return `<div class="list-item" style="${i===pastLends.length-1?'border-bottom:none':''}">
+        <div style="width:32px;height:32px;border-radius:9px;background:#f0f0f0;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-right:12px">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#888" stroke-width="2.2"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+        </div>
+        <div style="flex:1;min-width:0">
+          <div style="font-weight:600;font-size:14px;color:#555">${student?student.name:'Bilinmeyen'}</div>
+          <div style="font-size:12px;color:#aaa">${cls?cls.name:''} · İade: ${retStr}</div>
+        </div>
+      </div>`;
+    }).join('')}</div>`;
+  }
+
+  document.getElementById('bookDetailContent').innerHTML = html;
+  const page = document.getElementById('page-bookdetail');
+  requestAnimationFrame(() => page.classList.add('slide-in'));
+  history.pushState({ level: 2 }, '');
+}
+
+function closeBookDetail() {
+  document.getElementById('page-bookdetail').classList.remove('slide-in');
+}
+
+function openStudentDetail(studentId) {
+  currentStudentId = studentId;
+  const s = state.students.find(st => st.id === studentId);
+  const cls = state.classes.find(c => c.id === s.classId);
+  document.getElementById('studentDetailName').textContent = s.name;
+  document.getElementById('studentDetailSub').textContent = (cls ? cls.name : '') + (s.no ? ' · No: ' + s.no : '');
+  renderStudentBookHistory();
+  const page = document.getElementById('page-studentdetail');
+  requestAnimationFrame(() => page.classList.add('slide-in'));
+  history.pushState({ level: 2 }, '');
+}
+function closeStudentDetail() {
+  document.getElementById('page-studentdetail').classList.remove('slide-in');
+}
+
+// ── Kitap Ver (Öğrenci sayfasından) ──
+function openGiveBookManual() {
+  const s = state.students.find(st => st.id === currentStudentId);
+  document.getElementById('givebookStudentInfo').textContent = '👤 ' + s.name + ' için kitap seç';
+  document.getElementById('giveBookSearch').value = '';
+  const today = new Date().toISOString().split('T')[0];
+  document.getElementById('giveDateInput').value = today;
+  const due = new Date(); due.setDate(due.getDate()+14);
+  document.getElementById('giveDueDateInput').value = due.toISOString().split('T')[0];
+  renderGiveBookList();
+  openModal('modal-givebookmanual');
+}
+function renderGiveBookList() {
+  const el = document.getElementById('giveBookList');
+  const q = document.getElementById('giveBookSearch').value;
+  const byTitle = smartSearch(state.books, q, b => b.title);
+  const byAuthor = smartSearch(state.books, q, b => b.author||'');
+  const seen = new Set();
+  const books = [...byTitle, ...byAuthor].filter(b => { if(seen.has(b.id)) return false; seen.add(b.id); return true; });
+  if (!books.length) { el.innerHTML = `<div style="padding:14px;text-align:center;font-size:13px;color:var(--text2)">Kitap bulunamadı</div>`; return; }
+  el.innerHTML = books.map(b => {
+    const lentCount = state.lendings.filter(l => l.bookId === b.id && !l.returnDate && l.type === 'give').length;
+    const avail = b.qty - lentCount;
+    const alreadyHas = state.lendings.find(l => l.bookId === b.id && l.studentId === currentStudentId && !l.returnDate && l.type === 'give');
+    const disabled = avail <= 0 || alreadyHas;
+    const clickAttr = disabled ? '' : `onclick="giveBookToStudent('${b.id}')"`;
+    return `<div class="list-item" style="cursor:${disabled?'not-allowed':'pointer'};opacity:${disabled?0.45:1}" ${clickAttr}>
+      <div class="item-icon" style="background:#d1f0e8;border-radius:12px"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#0e9076" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg></div>
+      <div class="item-info">
+        <div class="item-title">${b.title}</div>
+        <div class="item-sub">${b.author||''}</div>
+      </div>
+      <span class="badge ${avail>0?'badge-green':'badge-red'}">${alreadyHas?'Üstünde':avail+' mevcut'}</span>
+    </div>`;
+  }).join('');
+}
+function giveBookToStudent(bookId) {
+  const giveDate = document.getElementById('giveDateInput').value;
+  const dueDate = document.getElementById('giveDueDateInput').value;
+  if (!dueDate) { alert('Lütfen teslim tarihi girin!'); return; }
+  const book = state.books.find(b => b.id === bookId);
+  const lentCount = state.lendings.filter(l => l.bookId === bookId && !l.returnDate && l.type === 'give').length;
+  if (lentCount >= book.qty) { alert('Tüm kopyalar ödünç verilmiş!'); return; }
+  state.lendings.push({
+    id: uid(), bookId, studentId: currentStudentId,
+    type: 'give', date: giveDate,
+    dueDate: dueDate, returnDate: null
+  });
+  save(); renderStudentBookHistory(); renderBooks(); renderStats(); updateBadge();
+  closeModal('modal-givebookmanual');
+  showToast('✅ ' + book.title + ' verildi!');
+}
+function openQRForStudent() {
+  // QR okutunca öğrenci zaten seçili olsun
+  qrMode = 'lendToStudent';
+  document.getElementById('manualBarcode').value = '';
+  document.getElementById('qrStatus').textContent = 'Kamerayı kitabın barkoduna doğrultun...';
+  openModal('modal-qr');
+  startCamera();
+}
+function renderStudentBookHistory() {
+  const el = document.getElementById('studentBookHistory');
+  const allLends = state.lendings.filter(l => l.studentId === currentStudentId && l.type === 'give');
+  if (!allLends.length) {
+    el.innerHTML = `<div class="empty-state"><div class="empty-icon">📚</div><p>Bu öğrenciye hiç kitap verilmemiş.</p></div>`;
+    return;
+  }
+  // Sort: unreturned first, then by date desc
+  const sorted = [...allLends].sort((a,b) => {
+    if (!a.returnDate && b.returnDate) return -1;
+    if (a.returnDate && !b.returnDate) return 1;
+    return new Date(b.date) - new Date(a.date);
+  });
+  const active = sorted.filter(l => !l.returnDate);
+  const returned = sorted.filter(l => l.returnDate);
+
+  let html = `<div style="font-size:12px;color:var(--text2);margin-bottom:12px">Toplam <b>${allLends.length}</b> kitap işlemi</div>`;
+
+  if (active.length) {
+    html += `<div style="font-size:12px;font-weight:700;color:var(--danger);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px">⚠️ Teslim Edilmedi (${active.length})</div>`;
+    html += `<div class="card" style="margin-bottom:16px">${active.map(l => {
+      const book = state.books.find(b => b.id === l.bookId);
+      const overdue = l.dueDate && new Date(l.dueDate) < new Date();
+      return `<div class="list-item" style="background:${overdue?'#fff5f5':'#fffbf0'}"
+        onmousedown="startItemLongPress('${l.id}')" onmouseup="cancelItemLongPress()" onmouseleave="cancelItemLongPress()"
+        ontouchstart="startItemLongPress('${l.id}')" ontouchend="cancelItemLongPress()" ontouchcancel="cancelItemLongPress()">
+        <div class="item-icon" style="background:#d1f0e8;border-radius:12px"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#0e9076" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/><path d="M9 11l2 2 4-4"/></svg></div>
+        <div class="item-info" style="flex:1;min-width:0">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+            <div class="item-title" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${book ? book.title : 'Silinmiş kitap'}</div>
+            <button onclick="returnFromHistory('${l.id}')" style="flex-shrink:0;align-self:center;padding:5px 10px;border-radius:8px;border:none;background:#22c55e;color:white;font-family:'Nunito',sans-serif;font-size:12px;font-weight:700;cursor:pointer;box-shadow:0 2px 6px rgba(34,197,94,0.3);white-space:nowrap">İade Et</button>
+          </div>
+          <div class="item-sub">${book?.author || ''}</div>
+          <div class="item-sub" style="margin-top:3px">Verildi: ${fmt(l.date)}${l.dueDate?' · Son: '+fmt(l.dueDate):''}</div>
+          ${overdue?'<div style="font-size:11px;font-weight:700;color:var(--danger);margin-top:2px">⚠️ GECİKTİ</div>':''}
+        </div>
+      </div>`;
+    }).join('')}</div>`;
+  }
+  if (returned.length) {
+    html += `<div style="font-size:12px;font-weight:700;color:var(--accent2);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px">✅ Teslim Edildi (${returned.length})</div>`;
+    html += `<div class="card">${returned.map(l => {
+      const book = state.books.find(b => b.id === l.bookId);
+      return `<div class="list-item"
+        onmousedown="startItemLongPress('${l.id}')" onmouseup="cancelItemLongPress()" onmouseleave="cancelItemLongPress()"
+        ontouchstart="startItemLongPress('${l.id}')" ontouchend="cancelItemLongPress()" ontouchcancel="cancelItemLongPress()">
+        <div class="item-icon" style="background:#d1f0e8;border-radius:12px"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#0e9076" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/><path d="M9 12l2 2 4-4"/></svg></div>
+        <div class="item-info">
+          <div class="item-title">${book ? book.title : 'Silinmiş kitap'}</div>
+          <div class="item-sub">${book?.author || ''}</div>
+          <div class="item-sub" style="margin-top:3px">Verildi: ${fmt(l.date)} · İade: ${fmt(l.returnDate)}</div>
+        </div>
+        <span style="font-size:22px">✅</span>
+      </div>`;
+    }).join('')}</div>`;
+  }
+  el.innerHTML = html;
+}
+function returnFromHistory(lendId) {
+  const lend = state.lendings.find(l => l.id === lendId);
+  lend.returnDate = new Date().toISOString().split('T')[0];
+  save(); renderStudentBookHistory(); renderBooks(); renderLendList(); renderStats(); updateBadge();
+  showToast('✅ Kitap iade alındı!');
+}
+function deleteFromHistory(lendId) {
+  confirmAction('Kaydı Sil', 'Bu ödünç kaydı kalıcı olarak silinecek. Emin misiniz?', () => {
+    state.lendings = state.lendings.filter(l => l.id !== lendId);
+    save(); renderStudentBookHistory(); renderBooks(); renderLendList(); renderStats(); updateBadge();
+  });
+}
+let itemLongPressTimer = null;
+function startItemLongPress(lendId) {
+  itemLongPressTimer = setTimeout(() => {
+    deleteFromHistory(lendId);
+  }, 700);
+}
+function cancelItemLongPress() {
+  clearTimeout(itemLongPressTimer);
+  itemLongPressTimer = null;
+}
+function openAddStudent() {
+  document.getElementById('studentNameInput').value = '';
+  document.getElementById('studentNoInput').value = '';
+  document.getElementById('modal-addstudent-title').textContent = '👤 Öğrenci Ekle';
+  document.getElementById('saveStudentBtn').onclick = saveStudent;
+  openModal('modal-addstudent');
+}
+function saveStudent() {
+  const name = document.getElementById('studentNameInput').value.trim();
+  if (!name) return alert('Öğrenci adı boş olamaz!');
+  state.students.push({ id: uid(), classId: currentClassId, name, no: document.getElementById('studentNoInput').value.trim() });
+  openClassFolders.add(currentClassId);
+  save(); renderClasses(); renderStats(); closeModal('modal-addstudent');
+}
+function deleteStudent(id) {
+  confirmAction('Öğrenciyi Sil', 'Bu öğrenci ve ödünç kayıtları silinecek. Emin misiniz?', () => {
+    state.students = state.students.filter(s => s.id !== id);
+    state.lendings = state.lendings.filter(l => l.studentId !== id);
+    save(); renderClasses(); renderStats();
+  });
+}
+
+// ═══════════════ BOOKS ═══════════════
+function openAddBook(prefillIsbn) {
+  document.getElementById('bookTitleInput').value = '';
+  document.getElementById('bookAuthorInput').value = '';
+  document.getElementById('bookPagesInput').value = '';
+  document.getElementById('bookIsbnInput').value = prefillIsbn || '';
+  document.getElementById('bookQtyInput').value = 1;
+  window._bookCoverData = null;
+  document.getElementById('bookAutoInfo').style.display = 'none';
+  document.getElementById('bookLoadingInfo').style.display = 'none';
+  document.getElementById('modal-addbook-title').textContent = '📖 Kitap Ekle';
+  document.getElementById('saveBookBtn').onclick = saveBook;
+  openModal('modal-addbook');
+  // ISBN varsa otomatik bilgi çek
+  if (prefillIsbn) {
+    fetchBookInfo(prefillIsbn);
+  }
+}
+
+function openCameraForCover() {
+  // Modal'ı geçici kapat, input'u tetikle, sonra geri aç
+  const modal = document.getElementById('modal-addbook');
+  modal.style.visibility = 'hidden';
+  const input = document.getElementById('bookCoverFileInput');
+  input.value = '';
+  
+  // Kullanıcı input'u kapat veya seç
+  const handleFocus = () => {
+    setTimeout(() => { modal.style.visibility = 'visible'; }, 500);
+    window.removeEventListener('focus', handleFocus);
+  };
+  window.addEventListener('focus', handleFocus);
+  
+  setTimeout(() => { input.click(); }, 100);
+}
+
+function onCoverSelected(e) {
+  const modal = document.getElementById('modal-addbook');
+  modal.style.visibility = 'visible';
+  
+  const file = e.target.files[0];
+  if (!file) return;
+  
+  const reader = new FileReader();
+  reader.onload = function(ev) {
+    window._bookCoverData = ev.target.result;
+    const img = document.getElementById('bookCoverImg');
+    const placeholder = document.getElementById('bookCoverPlaceholder');
+    if (img) { img.src = ev.target.result; img.style.display = 'block'; }
+    if (placeholder) placeholder.style.display = 'none';
+    // Kitap bilgisi alanını göster
+    const autoInfo = document.getElementById('bookAutoInfo');
+    if (autoInfo) autoInfo.style.display = 'block';
+    showToast('✅ Fotoğraf eklendi!');
+  };
+  reader.readAsDataURL(file);
+}
+
+async function fetchBookInfo(isbn) {
+  const loadEl = document.getElementById('bookLoadingInfo');
+  const infoEl = document.getElementById('bookAutoInfo');
+  const coverImg = document.getElementById('bookCoverImg');
+  const autoText = document.getElementById('bookAutoText');
+  
+  loadEl.style.display = 'block';
+  infoEl.style.display = 'none';
+  
+  try {
+    const res = await fetch('https://www.googleapis.com/books/v1/volumes?q=isbn:' + isbn + '&maxResults=1');
+    const data = await res.json();
+    
+    if (data.items && data.items.length > 0) {
+      const info = data.items[0].volumeInfo;
+      const title = info.title || '';
+      const authors = (info.authors || []).join(', ');
+      const pages = info.pageCount || '';
+      const cover = info.imageLinks?.thumbnail || info.imageLinks?.smallThumbnail || '';
+      
+      // Formu doldur
+      if (title) document.getElementById('bookTitleInput').value = title;
+      if (authors) document.getElementById('bookAuthorInput').value = authors;
+      if (pages) document.getElementById('bookPagesInput').value = pages;
+      
+      // Kapak görseli
+      if (cover) {
+        const coverUrl = cover.replace('http://', 'https://');
+        window._bookCoverData = coverUrl;
+        coverImg.src = coverUrl;
+        coverImg.style.display = 'block';
+      } else {
+        coverImg.style.display = 'none';
+      }
+      
+      // Bilgi özeti
+      autoText.innerHTML = '<b>' + (title || 'Bilinmiyor') + '</b><br>' +
+        (authors ? '✍️ ' + authors + '<br>' : '') +
+        (pages ? '📄 ' + pages + ' sayfa' : '');
+      
+      loadEl.style.display = 'none';
+      infoEl.style.display = 'block';
+      showToast('✅ Kitap bilgileri bulundu!');
+    } else {
+      loadEl.style.display = 'none';
+      showToast('⚠️ Kitap bulunamadı, bilgileri manuel girin');
+    }
+  } catch(e) {
+    loadEl.style.display = 'none';
+    showToast('⚠️ İnternet bağlantısı gerekli');
+  }
+}
+function openEditBook(id) {
+  const b = state.books.find(bk => bk.id === id);
+  document.getElementById('bookTitleInput').value = b.title;
+  document.getElementById('bookAuthorInput').value = b.author || '';
+  document.getElementById('bookPagesInput').value = b.pages || '';
+  document.getElementById('bookIsbnInput').value = b.isbn || '';
+  document.getElementById('bookQtyInput').value = b.qty;
+  window._bookCoverData = b.cover || null;
+  document.getElementById('modal-addbook-title').textContent = '✏️ Kitabı Düzenle';
+  document.getElementById('saveBookBtn').onclick = () => {
+    const title = document.getElementById('bookTitleInput').value.trim();
+    if (!title) return alert('Kitap adı boş olamaz!');
+    b.title = title;
+    b.author = document.getElementById('bookAuthorInput').value.trim();
+    b.isbn = document.getElementById('bookIsbnInput').value.trim();
+    b.qty = parseInt(document.getElementById('bookQtyInput').value) || 1;
+    b.pages = parseInt(document.getElementById('bookPagesInput').value) || 0;
+    save(); renderBooks(); renderStats(); closeModal('modal-addbook');
+  };
+  openModal('modal-addbook');
+}
+function previewBookCover(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(ev) {
+    window._bookCoverData = ev.target.result;
+    const prev = document.getElementById('bookCoverPreview');
+    prev.innerHTML = '<img src="' + ev.target.result + '" style="width:100%;height:100%;object-fit:cover">';
+    prev.style.background = 'none';
+  };
+  reader.readAsDataURL(file);
+}
+
+function saveBook() {
+  const title = document.getElementById('bookTitleInput').value.trim();
+  if (!title) return alert('Kitap adı boş olamaz!');
+  const pages = parseInt(document.getElementById('bookPagesInput').value) || 0;
+  state.books.push({
+    id: uid(),
+    title,
+    author: document.getElementById('bookAuthorInput').value.trim(),
+    isbn: document.getElementById('bookIsbnInput').value.trim(),
+    qty: parseInt(document.getElementById('bookQtyInput').value) || 1,
+    pages,
+    cover: window._bookCoverData || null
+  });
+  save(); renderBooks(); renderStats(); closeModal('modal-addbook'); closeModal('modal-qr');
+}
+function renderBooks() {
+  const el = document.getElementById('bookList');
+  const q = document.getElementById('bookSearch')?.value || '';
+  const byTitle = smartSearch(state.books, q, b => b.title);
+  const byAuthor = smartSearch(state.books, q, b => b.author||'');
+  const byIsbn = smartSearch(state.books, q, b => b.isbn||'');
+  const seen = new Set();
+  const books = [...byTitle, ...byAuthor, ...byIsbn].filter(b => { if(seen.has(b.id)) return false; seen.add(b.id); return true; });
+  if (!books.length) {
+    el.innerHTML = `<div class="empty-state"><div class="empty-icon">📚</div><p>Kitap bulunamadı.</p></div>`;
+    return;
+  }
+  el.innerHTML = books.map(b => {
+    const lentCount = state.lendings.filter(l => l.bookId === b.id && !l.returnDate && l.type === 'give').length;
+    const avail = b.qty - lentCount;
+    const isOpen = openBookFolders.has(b.id);
+    const detailHtml = isOpen ? buildBookDetailHtml(b.id) : '';
+    return `<div class="card" style="margin-bottom:6px;overflow:hidden"
+      onmousedown="startBookLongPress('${b.id}')" onmouseup="cancelBookLongPress()" onmouseleave="cancelBookLongPress()"
+      ontouchstart="startBookLongPress('${b.id}')" ontouchend="cancelBookLongPress()" ontouchcancel="cancelBookLongPress()">
+      <div class="list-item" id="book-header-${b.id}" style="cursor:pointer;background:${isOpen?'#c8e6d4':'transparent'};border-radius:${isOpen?'14px 14px 0 0':'14px'};transition:background 0.2s" onclick="toggleBookFolder('${b.id}')">
+        <div class="item-icon" style="background:#d1f0e8;border-radius:12px;overflow:hidden;flex-shrink:0">${b.cover ? `<img src="${b.cover}" style="width:100%;height:100%;object-fit:cover;border-radius:12px">` : '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#0e9076" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>'}</div>
+        <div class="item-info" style="flex:1;min-width:0">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+            <div class="item-title" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${b.title}</div>
+            <div style="display:flex;align-items:center;gap:6px;flex-shrink:0">
+              <span style="font-size:12px;font-weight:700;color:${avail>0?'#0e9076':'#dc2626'};white-space:nowrap">${avail}/${b.qty}</span>
+              <span id="book-arrow-${b.id}" style="font-size:20px;color:#1b4332;font-weight:700;flex-shrink:0;transition:transform 0.3s ease;transform:${isOpen?'rotate(90deg)':'rotate(0deg)'}">›</span>
+            </div>
+          </div>
+          <div class="item-sub">${b.author || 'Yazar belirtilmedi'}${b.isbn ? ' · '+b.isbn : ''}</div>
+        </div>
+      </div>
+      <div id="book-body-${b.id}" style="overflow:hidden;transition:height 0.32s cubic-bezier(0.4,0,0.2,1),opacity 0.28s ease;height:${isOpen?'auto':'0'};opacity:${isOpen?'1':'0'}">
+        ${detailHtml}
+      </div>
+    </div>`;
+  }).join('');
+}
+let bookLongPressTimer = null;
+function startBookLongPress(id) {
+  bookLongPressTimer = setTimeout(() => {
+    const b = state.books.find(b => b.id === id);
+    openActionSheet(b ? b.title : 'Kitap',
+      () => openEditBook(id),
+      () => deleteBook(id)
+    );
+  }, 700);
+}
+function cancelBookLongPress() { clearTimeout(bookLongPressTimer); bookLongPressTimer = null; }
+function deleteBook(id) {
+  confirmAction('Kitabı Sil', 'Bu kitap ve ödünç kayıtları silinecek. Emin misiniz?', () => {
+    state.books = state.books.filter(b => b.id !== id);
+    state.lendings = state.lendings.filter(l => l.bookId !== id);
+    save(); renderBooks(); renderStats();
+  });
+}
+
+// ═══════════════ QR SCANNER ═══════════════
+let zxingReader = null;
+let scanActive = false;
+
+function openQRScanner(mode) {
+  qrMode = mode;
+  document.getElementById('manualBarcode').value = '';
+  document.getElementById('qrStatus').textContent = 'Kamerayı barkoda doğrultun...';
+  openModal('modal-qr');
+  setTimeout(startCamera, 300);
+}
+
+async function startCamera() {
+  const status = document.getElementById('qrStatus');
+  const video = document.getElementById('qrVideo');
+  scanActive = true;
+  status.textContent = 'Kamera açılıyor...';
+  try {
+    try {
+      qrStream = await navigator.mediaDevices.getUserMedia({
+        video: {
+          facingMode: 'environment',
+          width: { ideal: 1920 },
+          height: { ideal: 1080 },
+          focusMode: 'continuous'
+        }
+      });
+    } catch {
+      try {
+        qrStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+      } catch {
+        qrStream = await navigator.mediaDevices.getUserMedia({ video: true });
+      }
+    }
+    video.srcObject = qrStream;
+    await video.play();
+    status.textContent = 'Kamerayı barkoda doğrultun...';
+    requestAnimationFrame(scanFrame);
+  } catch(e) {
+    if (location.protocol !== 'https:' && location.hostname !== 'localhost') {
+      status.innerHTML = '🔐 Kamera sadece HTTPS ile çalışır.';
+    } else if (e.name === 'NotAllowedError') {
+      status.innerHTML = '🔒 Kamera izni reddedildi.';
+    } else {
+      status.innerHTML = '⚠️ Kamera açılamadı. Manuel giriş kullanın.';
+    }
+  }
+}
+
+function bip() {
+  if (state.settings?.bipOff) return; // Ses kapalıysa çalma
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain); gain.connect(ctx.destination);
+    osc.frequency.value = 1800;
+    gain.gain.setValueAtTime(0.4, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.15);
+    osc.start(ctx.currentTime); osc.stop(ctx.currentTime + 0.15);
+  } catch(e) {}
+  if (navigator.vibrate) navigator.vibrate(80);
+}
+
+let barcodeDetector = null;
+if ('BarcodeDetector' in window) {
+  try {
+    // Önce desteklenen formatları kontrol et
+    BarcodeDetector.getSupportedFormats().then(formats => {
+      const wanted = ['ean_13','ean_8','code_128','code_39','upc_a','upc_e','qr_code','itf','codabar'];
+      const supported = wanted.filter(f => formats.includes(f));
+      barcodeDetector = new BarcodeDetector({ formats: supported.length ? supported : ['ean_13','ean_8','code_128'] });
+    }).catch(() => {
+      barcodeDetector = new BarcodeDetector({ formats: ['ean_13','ean_8','code_128','code_39','upc_a','upc_e','qr_code'] });
+    });
+  } catch(e) { barcodeDetector = null; }
+}
+
+function scanFrame() {
+  const video = document.getElementById('qrVideo');
+  const canvas = document.getElementById('qrCanvas');
+  if (!qrStream || !video || !canvas || !scanActive) return;
+  if (video.readyState !== video.HAVE_ENOUGH_DATA) {
+    if (qrStream && scanActive) requestAnimationFrame(scanFrame);
+    return;
+  }
+
+  canvas.width = video.videoWidth;
+  canvas.height = video.videoHeight;
+  const ctx = canvas.getContext('2d');
+  ctx.drawImage(video, 0, 0);
+
+  // 1. BarcodeDetector (Android Chrome native - EAN-13 destekler, çok hızlı)
+  if (barcodeDetector) {
+    barcodeDetector.detect(video).then(barcodes => {
+      if (barcodes.length > 0 && scanActive) {
+        const barcode = barcodes[0];
+        const val = barcode.rawValue;
+        // EAN-13 doğrulama: 13 haneli rakam olmalı
+        const isEAN13 = /^\d{13}$/.test(val);
+        const isEAN8 = /^\d{8}$/.test(val);
+        const isCode128 = val.length >= 6;
+        if (!isEAN13 && !isEAN8 && !isCode128) {
+          if (qrStream && scanActive) requestAnimationFrame(scanFrame);
+          return;
+        }
+        scanActive = false;
+        bip();
+        document.getElementById('qrStatus').textContent = '✅ Okundu: ' + val;
+        stopCamera();
+        setTimeout(() => handleBarcode(val), 150);
+      } else if (qrStream && scanActive) {
+        requestAnimationFrame(scanFrame);
+      }
+    }).catch(() => {
+      if (qrStream && scanActive) requestAnimationFrame(scanFrame);
+    });
+    return;
+  }
+
+  // 2. jsQR fallback (sadece QR kod)
+  const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+  const code = jsQR(imageData.data, imageData.width, imageData.height, { inversionAttempts: 'dontInvert' });
+  if (code && code.data && scanActive) {
+    scanActive = false;
+    bip();
+    document.getElementById('qrStatus').textContent = '✅ Okundu!';
+    stopCamera();
+    setTimeout(() => handleBarcode(code.data), 150);
+    return;
+  }
+
+  if (qrStream && scanActive) requestAnimationFrame(scanFrame);
+}
+
+function stopCamera() {
+  scanActive = false;
+  if (zxingReader) { try { zxingReader.reset(); } catch(e) {} zxingReader = null; }
+  if (qrStream) { qrStream.getTracks().forEach(t => t.stop()); qrStream = null; }
+}
+
+function closeQR() {
+  stopCamera();
+  closeModal('modal-qr');
+}
+
+function handleManualBarcode() {
+  const val = document.getElementById('manualBarcode').value.trim();
+  if (!val) return;
+  stopCamera();
+  handleBarcode(val);
+}
+
+function handleBarcode(code) {
+  closeModal('modal-qr');
+
+  // AKILLI MOD: kitap kayıtlıysa ödünç ver/iade al, değilse kitap ekle
+  if (qrMode === 'smart') {
+    const existing = state.books.find(b => b.isbn === code);
+    if (existing) {
+      currentLendBookId = existing.id;
+      const lentCount = state.lendings.filter(l => l.bookId === existing.id && !l.returnDate && l.type === 'give').length;
+      const avail = existing.qty - lentCount;
+      document.getElementById('lendBookInfo').innerHTML = `
+        <div class="info-row"><span class="info-key">Kitap</span><span class="info-val">${existing.title}</span></div>
+        <div class="info-row"><span class="info-key">Yazar</span><span class="info-val">${existing.author||'-'}</span></div>
+        <div class="info-row"><span class="info-key">Mevcut</span><span class="info-val">${avail} / ${existing.qty}</span></div>
+      `;
+      openModal('modal-lendaction');
+    } else {
+      openAddBook(code);
+    }
+    return;
+  }
+
+  if (qrMode === 'addBook') {
+    const existing = state.books.find(b => b.isbn === code);
+    if (existing) {
+      currentLendBookId = existing.id;
+      const lentCount = state.lendings.filter(l => l.bookId === existing.id && !l.returnDate && l.type === 'give').length;
+      const avail = existing.qty - lentCount;
+      document.getElementById('lendBookInfo').innerHTML = `
+        <div class="info-row"><span class="info-key">Kitap</span><span class="info-val">${existing.title}</span></div>
+        <div class="info-row"><span class="info-key">Yazar</span><span class="info-val">${existing.author||'-'}</span></div>
+        <div class="info-row"><span class="info-key">Mevcut</span><span class="info-val">${avail} / ${existing.qty}</span></div>
+      `;
+      openModal('modal-lendaction');
+    } else {
+      openAddBook(code);
+    }
+  } else if (qrMode === 'lendToStudent') {
+    // QR from student detail page — book goes directly to this student
+    const book = state.books.find(b => b.isbn === code || b.id === code);
+    if (!book) {
+      if (confirm('Kitap bulunamadı. Yeni kitap olarak eklemek ister misiniz?')) { openAddBook(code); }
+      return;
+    }
+    const lentCount = state.lendings.filter(l => l.bookId === book.id && !l.returnDate && l.type === 'give').length;
+    if (lentCount >= book.qty) { alert('Bu kitabın tüm kopyaları ödünç verilmiş!'); return; }
+    const alreadyHas = state.lendings.find(l => l.bookId === book.id && l.studentId === currentStudentId && !l.returnDate && l.type === 'give');
+    if (alreadyHas) { alert('Bu öğrenci bu kitabı zaten üstünde tutuyor!'); return; }
+    const d = new Date(); d.setDate(d.getDate()+14);
+    state.lendings.push({
+      id: uid(), bookId: book.id, studentId: currentStudentId,
+      type: 'give', date: new Date().toISOString().split('T')[0],
+      dueDate: d.toISOString().split('T')[0], returnDate: null
+    });
+    save(); renderStudentBookHistory(); renderBooks(); renderStats(); updateBadge();
+    showToast('✅ ' + book.title + ' verildi!');
+  } else if (qrMode === 'take') {
+    const book = state.books.find(b => b.isbn === code || b.id === code);
+    if (!book) { showToast('❌ Kitap bulunamadı!'); return; }
+    currentLendBookId = book.id;
+    renderTakePicker();
+    openModal('modal-takebook');
+  } else if (qrMode === 'lend') {
+    const book = state.books.find(b => b.isbn === code || b.id === code);
+    if (!book) {
+      if (confirm('Kitap bulunamadı. Yeni kitap olarak eklemek ister misiniz?')) {
+        openAddBook(code);
+      }
+      return;
+    }
+    currentLendBookId = book.id;
+    const lentCount = state.lendings.filter(l => l.bookId === book.id && !l.returnDate && l.type === 'give').length;
+    document.getElementById('lendBookInfo').innerHTML = `
+      <div class="info-row"><span class="info-key">Kitap</span><span class="info-val">${book.title}</span></div>
+      <div class="info-row"><span class="info-key">Yazar</span><span class="info-val">${book.author||'-'}</span></div>
+      <div class="info-row"><span class="info-key">Mevcut</span><span class="info-val">${book.qty - lentCount} / ${book.qty}</span></div>
+    `;
+    openModal('modal-lendaction');
+  }
+}
+
+// ═══════════════ LENDING ═══════════════
+function startLend(type) {
+  currentLendType = type;
+  closeModal('modal-lendaction');
+  if (type === 'give') {
+    const today = new Date().toISOString().split('T')[0];
+    document.getElementById('giveDateQR').value = today;
+    // Varsayılan vade gününü otomatik ekle
+    const defaultDays = state.settings?.defaultDays || 14;
+    setDueDate('dueDateInput', defaultDays);
+    renderStudentPicker();
+    openModal('modal-givestudent');
+  } else {
+    renderTakePicker();
+    openModal('modal-takebook');
+  }
+}
+function renderStudentPicker() {
+  const q = document.getElementById('studentSearchInput')?.value.toLowerCase() || '';
+  const el = document.getElementById('studentPicker');
+  const students = smartSearch(state.students, q, s => s.name);
+  if (!students.length) {
+    el.innerHTML = `<div class="empty-state" style="padding:20px"><p>Öğrenci bulunamadı. Önce sınıf ve öğrenci ekleyin.</p></div>`;
+    return;
+  }
+  el.innerHTML = students.map(s => {
+    const cls = state.classes.find(c => c.id === s.classId);
+    return `<div class="list-item" style="cursor:pointer" onclick="confirmGive('${s.id}')">
+      <div class="item-icon" style="background:#d1f0e8;border-radius:12px"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#0e9076" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg></div>
+      <div class="item-info">
+        <div class="item-title">${s.name}</div>
+        <div class="item-sub">${cls ? cls.name : ''}${s.no ? ' · No: '+s.no : ''}</div>
+      </div>
+      <span style="color:var(--accent2);font-size:20px">›</span>
+    </div>`;
+  }).join('');
+}
+function confirmGive(studentId) {
+  const giveDate = document.getElementById('giveDateQR').value || new Date().toISOString().split('T')[0];
+  const dueDate = document.getElementById('dueDateInput').value;
+  if (!dueDate) { alert('Lütfen teslim tarihi girin!'); return; }
+  const book = state.books.find(b => b.id === currentLendBookId);
+  const lentCount = state.lendings.filter(l => l.bookId === book.id && !l.returnDate && l.type === 'give').length;
+  if (lentCount >= book.qty) { alert('Bu kitabın tüm kopyaları ödünç verilmiş!'); return; }
+  const student = state.students.find(s => s.id === studentId);
+  const alreadyHas = state.lendings.find(l => l.bookId === currentLendBookId && l.studentId === studentId && !l.returnDate && l.type === 'give');
+  if (alreadyHas) { alert(student.name + ' bu kitabı zaten almış!'); return; }
+  state.lendings.push({
+    id: uid(), bookId: currentLendBookId, studentId,
+    type: 'give', date: giveDate,
+    dueDate: dueDate, returnDate: null
+  });
+  save(); renderBooks(); renderLendList(); renderStats(); updateBadge();
+  closeModal('modal-givestudent');
+  showToast('✅ ' + book.title + ' → ' + student.name + ' verildi!');
+}
+function renderTakePicker() {
+  const el = document.getElementById('takePicker');
+  const book = state.books.find(b => b.id === currentLendBookId);
+  const activeLends = state.lendings.filter(l => l.bookId === currentLendBookId && !l.returnDate && l.type === 'give');
+  if (!activeLends.length) {
+    el.innerHTML = `<div class="empty-state" style="padding:20px"><p>Bu kitap şu an kimde değil.</p></div>`;
+    return;
+  }
+  el.innerHTML = activeLends.map(l => {
+    const student = state.students.find(s => s.id === l.studentId);
+    const cls = student ? state.classes.find(c => c.id === student.classId) : null;
+    const overdue = l.dueDate && new Date(l.dueDate) < new Date();
+    return `<div class="list-item ${overdue?'overdue-row':''}" style="cursor:pointer" onclick="confirmReturn('${l.id}')">
+      <div class="item-icon" style="background:#d1f0e8;border-radius:12px"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#0e9076" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg></div>
+      <div class="item-info">
+        <div class="item-title">${student ? student.name : 'Bilinmiyor'}</div>
+        <div class="item-sub ${overdue?'overdue-text':''}">${cls?cls.name+' · ':''} Verilen: ${fmt(l.date)}${l.dueDate?' · Son: '+fmt(l.dueDate):''}</div>
+      </div>
+      <span style="color:var(--accent2);font-size:20px">›</span>
+    </div>`;
+  }).join('');
+}
+function confirmReturn(lendId) {
+  const lend = state.lendings.find(l => l.id === lendId);
+  const book = state.books.find(b => b.id === lend.bookId);
+  const student = state.students.find(s => s.id === lend.studentId);
+  lend.returnDate = new Date().toISOString().split('T')[0];
+  save(); renderBooks(); renderLendList(); renderStats(); updateBadge();
+  closeModal('modal-takebook');
+  showToast('✅ ' + book.title + ' geri alındı (' + (student?.name||'') + ')');
+}
+
+// ═══════════════ LEND LIST ═══════════════
+let openFolders = new Set(); // hangi sınıf klasörleri açık
+let lendVisible = {}; // her sınıf için görünen kayıt sayısı
+
+function showMoreLend(classId) {
+  if (!lendVisible[classId]) lendVisible[classId] = 5;
+  lendVisible[classId] += 10;
+  const container = document.getElementById('lend-items-' + classId);
+  if (!container) return;
+  // Yeni elemanları ekle
+  renderLendItems(classId, container);
+}
+
+function renderLendItems(classId, container) {
+  // Bu fonksiyon renderLendList tarafından doldurulur, burada sadece scroll animasyonu için
+  renderLendList();
+}
+
+function switchLendTab(tab) {
+  lendTab = tab;
+  openFolders.clear();
+  lendVisible = {};
+  const v = document.getElementById('tab-verilenler');
+  const a = document.getElementById('tab-alinanlar');
+  if (v && a) {
+    v.style.background = tab==='verilenler' ? '#3a8a64' : '#eeeae1';
+    v.style.color = tab==='verilenler' ? '#fff' : '#1b4332';
+    a.style.background = tab==='alinanlar' ? '#3a8a64' : '#eeeae1';
+    a.style.color = tab==='alinanlar' ? '#fff' : '#1b4332';
+  }
+  renderLendList();
+}
+function toggleFolder(classId) {
+  const el = document.getElementById('lendList');
+  if (!el) return;
+  const body = el.querySelector(`.folder-body[data-id="${classId}"]`);
+  const arrow = el.querySelector(`.folder-arrow[data-id="${classId}"]`);
+  const header = el.querySelector(`.folder-header[data-id="${classId}"]`);
+  if (!body) return;
+
+  if (openFolders.has(classId)) {
+    // Kapat
+    body.style.height = body.scrollHeight + 'px';
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      body.style.height = '0';
+      body.style.opacity = '0';
+    }));
+    if (arrow) arrow.classList.remove('open');
+    if (header) header.style.background = 'white';
+    openFolders.delete(classId);
+    delete lendVisible[classId];
+  } else {
+    // Aç
+    openFolders.add(classId);
+    lendVisible[classId] = 5;
+    if (header) header.style.background = '#c8e6d4';
+    if (arrow) arrow.classList.add('open');
+    // İçeriği doldur
+    const isRet = classId.startsWith('ret-');
+    if (isRet) {
+      const realId = classId.replace('ret-', '');
+      const items = state.lendings.filter(l => l.type === 'give' && l.returnDate).filter(l => {
+        const s = state.students.find(s => s.id === l.studentId);
+        if (!s) return realId === 'noclass';
+        const c = state.classes.find(c => c.id === s.classId);
+        return c ? c.id === realId : realId === 'noclass';
+      });
+      body.innerHTML = items.slice().reverse().map(l => {
+        const book = state.books.find(b => b.id === l.bookId);
+        const student = state.students.find(s => s.id === l.studentId);
+        return `<div class="list-item" style="background:#ffffff;padding-left:24px;border-top:1px solid var(--border)">
+          <div style="width:32px;height:32px;border-radius:9px;background:#d1f0e8;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-right:12px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#0e9076" stroke-width="2.5"><path d="M20 6L9 17l-5-5"/></svg></div>
+          <div class="item-info">
+            <div class="item-title">${book ? book.title : 'Silinmiş kitap'}</div>
+            <div class="item-sub">${student ? student.name : '?'}</div>
+            <div class="item-sub">Verildi: ${fmt(l.date)} · İade: ${fmt(l.returnDate)}</div>
+          </div>
+        </div>`;
+      }).join('');
+    } else {
+      body.innerHTML = buildLendRows(getLendItemsForClass(classId), classId);
+    }
+    // Animasyon
+    body.style.height = '0';
+    body.style.opacity = '0';
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      body.style.height = body.scrollHeight + 'px';
+      body.style.opacity = '1';
+      body.addEventListener('transitionend', () => { body.style.height = 'auto'; body.style.overflow = 'visible'; }, { once: true });
+    }));
+  }
+}
+
+function getLendItemsForClass(classId) {
+  const active = state.lendings.filter(l => l.type === 'give' && !l.returnDate);
+  return active.filter(l => {
+    const student = state.students.find(s => s.id === l.studentId);
+    if (!student) return classId === 'noclass';
+    const cls = state.classes.find(c => c.id === student.classId);
+    if (!cls) return classId === 'noclass';
+    return cls.id === classId;
+  }).map(l => ({ l, student: state.students.find(s => s.id === l.studentId) }));
+}
+
+function buildLendRows(items, classId) {
+  const visible = lendVisible[classId] || 5;
+  const shown = items.slice(0, visible);
+  const remaining = items.length - visible;
+  const rows = shown.map(({l, student}) => {
+    const book = state.books.find(b => b.id === l.bookId);
+    const overdue = l.dueDate && new Date(l.dueDate) < new Date();
+    return `<div class="list-item" style="background:${overdue?'#fff5f5':'#fafafa'};padding-left:24px;border-top:1px solid var(--border)">
+      <div style="width:32px;height:32px;border-radius:9px;background:#d1f0e8;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-right:12px"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#0e9076" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg></div>
+      <div class="item-info" style="flex:1;min-width:0">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+          <div class="item-title" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${book ? book.title : 'Silinmiş kitap'}</div>
+          <button onclick="quickReturn('${l.id}')" style="flex-shrink:0;padding:5px 10px;border-radius:8px;border:none;background:#22c55e;color:white;font-family:'Nunito',sans-serif;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap">İade Et</button>
+        </div>
+        <div class="item-sub">${student ? student.name : '?'}</div>
+        <div class="item-sub ${overdue?'overdue-text':''}">Verildi: ${fmt(l.date)} · Son: ${fmt(l.dueDate)} ${overdue?'⚠️':''}</div>
+      </div>
+    </div>`;
+  }).join('');
+  const moreBtn = remaining > 0 ? `<div style="border-top:1px solid var(--border);padding:10px 16px">
+    <button onclick="lendVisible['${classId}']=(lendVisible['${classId}']||5)+10;refreshLendFolder('${classId}')"
+      style="width:100%;padding:8px;border-radius:8px;border:1.5px dashed #b7d4b0;background:transparent;font-family:'Nunito',sans-serif;font-size:12px;font-weight:700;color:#3a8a64;cursor:pointer">
+      + Daha fazla göster (${remaining} kayıt daha)
+    </button>
+  </div>` : '';
+  return rows + moreBtn;
+}
+
+function refreshLendFolder(classId) {
+  const el = document.getElementById('lendList');
+  if (!el) return;
+  const body = el.querySelector(`.folder-body[data-id="${classId}"]`);
+  if (!body) return;
+  const items = getLendItemsForClass(classId);
+  body.innerHTML = buildLendRows(items, classId);
+}
+function renderLendList() {
+  const el = document.getElementById('lendList');
+  if (!el) return;
+  const q = (lendSearchQuery || '').toLowerCase().trim();
+  if (lendTab === 'verilenler') {
+    let active = state.lendings.filter(l => l.type === 'give' && !l.returnDate);
+    if (q) {
+      active = active.filter(l => {
+        const student = state.students.find(s => s.id === l.studentId);
+        const book = state.books.find(b => b.id === l.bookId);
+        return (student && student.name.toLowerCase().includes(q)) || (book && book.title.toLowerCase().includes(q));
+      });
+    }
+    if (!active.length) { el.innerHTML = `<div class="empty-state"><div class="empty-icon">📤</div><p>${q ? 'Sonuç bulunamadı.' : 'Ödünç verilen kitap yok.'}</p></div>`; return; }
+
+    // Sınıflara göre grupla
+    const byClass = {};
+    const noClass = [];
+    active.forEach(l => {
+      const student = state.students.find(s => s.id === l.studentId);
+      const cls = student ? state.classes.find(c => c.id === student.classId) : null;
+      if (cls) {
+        if (!byClass[cls.id]) byClass[cls.id] = { cls, items: [] };
+        byClass[cls.id].items.push({ l, student });
+      } else {
+        noClass.push({ l, student });
+      }
+    });
+
+    let html = '';
+    [...Object.values(byClass), ...(noClass.length ? [{ cls: null, items: noClass }] : [])].forEach(group => {
+      const classId = group.cls ? group.cls.id : 'noclass';
+      const className = group.cls ? group.cls.name : 'Sınıf Yok';
+      if (q) openFolders.add(classId);
+      const isOpen = openFolders.has(classId);
+      const overdueCount = group.items.filter(({l}) => l.dueDate && new Date(l.dueDate) < new Date()).length;
+
+      html += `<div class="card" style="margin-bottom:6px">
+        <div class="list-item folder-header" data-id="${classId}" style="cursor:pointer;background:${isOpen?'#c8e6d4':'white'}" onclick="toggleFolder('${classId}')">
+          <div class="item-icon folder-icon" data-id="${classId}" style="width:32px;height:32px;border-radius:9px;background:#d1f0e8;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-right:12px;order:1">${isOpen?'<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#0e9076" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/><line x1="2" y1="10" x2="22" y2="10"/></svg>':'<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#0e9076" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>'}</div>
+          <div class="item-info">
+            <div class="item-title" style="font-size:var(--fs-folder,15px)">${className}</div>
+            <div class="item-sub">${group.items.length} kitap${overdueCount?' · <span style="color:var(--danger);font-weight:700">'+overdueCount+' gecikmiş</span>':''}</div>
+          </div>
+          <span class="folder-arrow ${isOpen?'open':''}" data-id="${classId}">›</span>
+        </div>
+        <div class="folder-body" data-id="${classId}" style="height:0;opacity:0;overflow:hidden;transition:height 0.32s cubic-bezier(0.4,0,0.2,1),opacity 0.28s ease"></div>
+      </div>`;
+    });
+    el.innerHTML = html;
+
+  } else {
+    let returned = state.lendings.filter(l => l.type === 'give' && l.returnDate);
+    if (q) {
+      returned = returned.filter(l => {
+        const student = state.students.find(s => s.id === l.studentId);
+        const book = state.books.find(b => b.id === l.bookId);
+        return (student && student.name.toLowerCase().includes(q)) || (book && book.title.toLowerCase().includes(q));
+      });
+    }
+    if (!returned.length) { el.innerHTML = `<div class="empty-state"><div class="empty-icon">📥</div><p>${q ? 'Sonuç bulunamadı.' : 'İade alınan kitap yok.'}</p></div>`; return; }
+
+    // Sınıflara göre grupla
+    const byClass = {};
+    const noClass = [];
+    returned.forEach(l => {
+      const student = state.students.find(s => s.id === l.studentId);
+      const cls = student ? state.classes.find(c => c.id === student.classId) : null;
+      if (cls) {
+        if (!byClass[cls.id]) byClass[cls.id] = { cls, items: [] };
+        byClass[cls.id].items.push({ l, student });
+      } else {
+        noClass.push({ l, student });
+      }
+    });
+
+    let html = '';
+    [...Object.values(byClass), ...(noClass.length ? [{ cls: null, items: noClass }] : [])].forEach(group => {
+      const classId = 'ret-' + (group.cls ? group.cls.id : 'noclass');
+      const className = group.cls ? group.cls.name : 'Sınıf Yok';
+      const isOpen = openFolders.has(classId);
+
+      html += `<div class="card" style="margin-bottom:6px;overflow:hidden">
+        <div class="list-item folder-header" data-id="${classId}" style="cursor:pointer;background:${isOpen?'#c8e6d4':'white'}" onclick="toggleFolder('${classId}')">
+          <div class="item-icon folder-icon" data-id="${classId}" style="width:32px;height:32px;border-radius:9px;background:#d1f0e8;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-right:12px;order:1">${isOpen?'<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#0e9076" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/><line x1="2" y1="10" x2="22" y2="10"/></svg>':'<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#0e9076" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>'}</div>
+          <div class="item-info">
+            <div class="item-title" style="font-size:var(--fs-folder,15px)">${className}</div>
+            <div class="item-sub">${group.items.length} kitap iade edildi</div>
+          </div>
+          <span class="folder-arrow ${isOpen?'open':''}" data-id="${classId}">›</span>
+        </div>
+        <div class="folder-body" data-id="${classId}" style="height:0;opacity:0;overflow:hidden;transition:height 0.32s cubic-bezier(0.4,0,0.2,1),opacity 0.28s ease"></div>
+      </div>`;
+    });
+    el.innerHTML = html;
+  }
+}
+function quickReturn(lendId) {
+  const lend = state.lendings.find(l => l.id === lendId);
+  lend.returnDate = new Date().toISOString().split('T')[0];
+  save(); renderBooks(); renderLendList(); renderStats(); updateBadge();
+  showToast('✅ Kitap iade alındı!');
+}
+function updateBadge() {
+  const count = state.lendings.filter(l => l.type === 'give' && !l.returnDate).length;
+  const badge = document.getElementById('lendBadge');
+  if (count > 0) { badge.textContent = count; badge.style.display = 'block'; }
+  else { badge.style.display = 'none'; }
+}
+
+// ═══════════════ STATS ═══════════════
+
+const openStatSections = new Set();
+const statVisible = {};
+
+function openOverdueModal() {
+  const today = new Date(); today.setHours(0,0,0,0);
+  const overdue = state.lendings
+    .filter(l => l.type === 'give' && !l.returnDate && l.dueDate && new Date(l.dueDate) < today)
+    .sort((a,b) => new Date(a.dueDate) - new Date(b.dueDate));
+  const subtitle = document.getElementById('overdueSubtitle');
+  const list = document.getElementById('overdueList');
+  subtitle.textContent = overdue.length + ' kitabın iade tarihi geçmiş!';
+  list.innerHTML = overdue.length ? overdue.map(l => {
+    const student = state.students.find(s => s.id === l.studentId);
+    const book = state.books.find(b => b.id === l.bookId);
+    const cls = student ? state.classes.find(c => c.id === student.classId) : null;
+    const daysLate = Math.floor((today - new Date(l.dueDate)) / 86400000);
+    const dueStr = new Date(l.dueDate).toLocaleDateString('tr-TR');
+    return `<div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid rgba(0,0,0,0.06)">
+      <div style="width:34px;height:34px;background:#fce7e7;border-radius:9px;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#dc2626" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+      </div>
+      <div style="flex:1;min-width:0">
+        <div style="font-weight:700;font-size:14px;color:#222;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${book?book.title:'?'}</div>
+        <div style="font-size:12px;color:#888">${student?student.name:'?'}${cls?' · '+cls.name:''} · ${dueStr}</div>
+      </div>
+      <span style="font-size:12px;font-weight:700;color:#dc2626;flex-shrink:0;white-space:nowrap">${daysLate} gün</span>
+    </div>`;
+  }).join('') : `<div style="text-align:center;padding:16px;color:#888;font-size:13px">Vadesi geçmiş kitap yok 🎉</div>`;
+  document.getElementById('modal-overdue').classList.add('open');
+}
+
+function checkOverdueOnOpen() {
+  if (state.settings?.overdueAlert === false) return; // Kapalıysa gösterme (varsayılan açık)
+  const today = new Date(); today.setHours(0,0,0,0);
+  const tomorrow = new Date(today); tomorrow.setDate(tomorrow.getDate() + 1);
+  let overdue = state.lendings.filter(l => l.type === 'give' && !l.returnDate && l.dueDate && new Date(l.dueDate) < today);
+  // Son gün hatırlatması açıksa bugün iade edilecekleri de ekle
+  if (state.settings?.dueTodayAlert) {
+    const dueToday = state.lendings.filter(l => l.type === 'give' && !l.returnDate && l.dueDate && new Date(l.dueDate).toDateString() === today.toDateString());
+    overdue = [...overdue, ...dueToday.filter(d => !overdue.find(o => o.id === d.id))];
+  }
+  if (!overdue.length) return;
+  // Telefon bildirimi gönder
+  sendOverdueNotification(overdue.length);
+  const subtitle = document.getElementById('overdueSubtitle');
+  const list = document.getElementById('overdueList');
+  subtitle.textContent = overdue.length + ' kitabın iade tarihi geçmiş!';
+  list.innerHTML = overdue.map(l => {
+    const student = state.students.find(s => s.id === l.studentId);
+    const book = state.books.find(b => b.id === l.bookId);
+    const cls = student ? state.classes.find(c => c.id === student.classId) : null;
+    const daysLate = Math.floor((today - new Date(l.dueDate)) / 86400000);
+    return `<div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid rgba(0,0,0,0.06)">
+      <div style="width:34px;height:34px;background:#fce7e7;border-radius:9px;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#dc2626" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+      </div>
+      <div style="flex:1;min-width:0">
+        <div style="font-weight:700;font-size:14px;color:#222;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${book ? book.title : 'Bilinmeyen kitap'}</div>
+        <div style="font-size:12px;color:#888">${student ? student.name : '?'}${cls ? ' · ' + cls.name : ''}</div>
+      </div>
+      <span style="font-size:12px;font-weight:700;color:#dc2626;flex-shrink:0">${daysLate} gün</span>
+    </div>`;
+  }).join('');
+  document.getElementById('modal-overdue').classList.add('open');
+}
+
+function toggleStatSection(key) {
+  const body = document.getElementById('body-' + key);
+  const arrow = document.getElementById('arrow-' + key);
+  if (!body) return;
+  const isOpen = openStatSections.has(key);
+  if (isOpen) {
+    body.style.height = body.scrollHeight + 'px';
+    requestAnimationFrame(() => { body.style.height = '0'; body.style.opacity = '0'; });
+    openStatSections.delete(key);
+    statVisible[key] = 0;
+    arrow.classList.remove('open');
+    const card = document.querySelector(`[onclick="toggleStatSection('${key}')"`);
+    if (card) card.style.background = '#ffffff';
+    renderStats();
+  } else {
+    openStatSections.add(key);
+    statVisible[key] = 5;
+    renderStats();
+    const card = document.querySelector(`[onclick="toggleStatSection('${key}')"`);
+    if (card) card.style.background = '#c8e6d4';
+    body.style.height = '0'; body.style.opacity = '0';
+    requestAnimationFrame(() => {
+      body.style.height = body.scrollHeight + 'px'; body.style.opacity = '1';
+      body.addEventListener('transitionend', () => { body.style.height = 'auto'; }, { once: true });
+    });
+    arrow.classList.add('open');
+  }
+}
+
+function makeRankRows(items, labelFn, subFn, badgeFn, offset=0) {
+  const medals = ['🥇','🥈','🥉'];
+  return items.map((item, i) => {
+    const realIndex = i + offset;
+    const rank = medals[realIndex] || `<span style="font-size:12px;font-weight:700;color:var(--text2);width:20px;display:inline-block;text-align:center">${realIndex+1}</span>`;
+    return `<div style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;${i>0?'border-top:1px solid rgba(0,0,0,0.06)':''}background:#fff">
+      <div style="width:28px;text-align:center;font-size:16px;flex-shrink:0">${rank}</div>
+      <div style="flex:1;min-width:0;margin:0 10px">
+        <div style="font-weight:500;font-size:14px;color:#222;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${labelFn(item)}</div>
+        <div style="font-size:12px;color:#888;margin-top:2px">${subFn(item)}</div>
+      </div>
+      <span style="font-weight:700;font-size:15px;color:#1b4332;flex-shrink:0;white-space:nowrap">${badgeFn(item)}</span>
+    </div>`;
+  }).join('');
+}
+
+function renderStatSection(key, items, labelFn, subFn, badgeFn, emptyMsg) {
+  const preview = document.getElementById('preview-' + key);
+  const full = document.getElementById('full-' + key);
+  if (!preview || !full) return;
+  if (!items.length) {
+    preview.innerHTML = `<div style="font-size:12px;color:var(--text2);padding:4px 0">${emptyMsg}</div>`;
+    full.innerHTML = '';
+    return;
+  }
+  preview.innerHTML = '';
+  const count = statVisible[key] || 0;
+  const visible = items.slice(0, count);
+  const hasMore = count < items.length;
+  full.innerHTML = count > 0
+    ? `<div class="card" style="margin-top:2px">${makeRankRows(visible, labelFn, subFn, badgeFn)}
+        ${hasMore ? `<div onclick="showMoreStat('${key}')" style="padding:10px;text-align:center;font-size:13px;font-weight:700;color:#3a8a64;cursor:pointer;border-top:1px solid rgba(0,0,0,0.06)">+ 5 tane daha göster</div>` : ''}
+       </div>`
+    : '';
+}
+
+function showMoreStat(key) {
+  event.stopPropagation();
+  statVisible[key] = (statVisible[key] || 0) + 5;
+  renderStats();
+}
+
+function renderStats() {
+  const activeLends = state.lendings.filter(l => l.type === 'give' && !l.returnDate);
+  const overdueLends = activeLends.filter(l => l.dueDate && new Date(l.dueDate) < new Date());
+  updateBadge();
+
+  // 1-4 Sayısal istatistikler
+  const numEl = document.getElementById('statNumbers');
+  if (numEl) {
+    const iconStyle = (bg) => `width:32px;height:32px;border-radius:9px;background:${bg};display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-right:12px`;
+    const rows = [
+      { label: 'Toplam Öğrenci Sayısı', value: state.students.length, bg: '#cff0ea', stroke: '#0e9076',
+        svg: '<circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/>' },
+      { label: 'Toplam Kitap Sayısı', value: state.books.reduce((s,b)=>s+b.qty,0), bg: '#fde8c8', stroke: '#d97706',
+        svg: '<path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>' },
+      { label: 'Ödünç Verilen Kitap', value: activeLends.length, bg: '#dbeafe', stroke: '#2563eb',
+        svg: '<path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/><path d="M9 11l2 2 4-4"/>' },
+      { label: 'Vadesi Geçmiş', value: overdueLends.length, bg: overdueLends.length>0?'#dc2626':'#fce7e7', stroke: overdueLends.length>0?'white':'#dc2626', textColor: overdueLends.length>0?'#dc2626':'#1b4332', rowBg: overdueLends.length>0?'#fff5f5':'', clickable: true,
+        svg: '<circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>' },
+    ];
+    numEl.innerHTML = `<div class="card" style="margin-bottom:12px">${rows.map((r,i) => `
+      <div class="list-item" style="display:flex;align-items:center;justify-content:space-between;${i===rows.length-1?'border-bottom:none':''};${r.rowBg?'background:'+r.rowBg:''};${r.clickable&&r.value>0?'cursor:pointer':''}" ${r.clickable&&r.value>0?'onclick="openOverdueModal()"':''}>
+        <div style="${iconStyle(r.bg)};flex-shrink:0">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="${r.stroke}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${r.svg}</svg>
+        </div>
+        <div style="flex:1;min-width:0">
+          <div style="font-weight:500;font-size:15px;color:${r.textColor||'#222'}">${r.label}</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:4px;flex-shrink:0">
+          <span style="font-weight:700;font-size:18px;color:${r.textColor||'#1b4332'};margin-left:12px">${r.value}</span>
+          ${r.clickable&&r.value>0?'<span style="font-size:16px;color:#dc2626;font-weight:700;margin-left:2px">›</span>':''}
+        </div>
+      </div>`).join('')}</div>`;
+  }
+
+  // 5. En çok okunan kitaplar
+  const bookCounts = {};
+  state.lendings.filter(l => l.type === 'give').forEach(l => { bookCounts[l.bookId] = (bookCounts[l.bookId]||0)+1; });
+  const topBooks = Object.entries(bookCounts).sort((a,b)=>b[1]-a[1]).map(([id,cnt]) => ({ book: state.books.find(b=>b.id===id), cnt }));
+  renderStatSection('topBooks', topBooks,
+    x => x.book ? x.book.title : 'Silinmiş kitap',
+    x => x.book?.author || '',
+    x => x.cnt + ' kez',
+    'Henüz ödünç kaydı yok.'
+  );
+
+  // 6. En çok sayfa okuyan öğrenciler
+  const pageReaders = state.students.map(s => {
+    const lends = state.lendings.filter(l => l.type==='give' && l.studentId===s.id);
+    const totalPages = lends.reduce((sum,l) => sum + (state.books.find(b=>b.id===l.bookId)?.pages||0), 0);
+    return { student: s, totalPages, totalBooks: lends.length };
+  }).filter(x => x.totalBooks > 0).sort((a,b) => b.totalPages-a.totalPages || b.totalBooks-a.totalBooks);
+  const hasPages = pageReaders.some(x => x.totalPages > 0);
+  renderStatSection('topPages', pageReaders,
+    x => x.student.name,
+    x => { const c = state.classes.find(c=>c.id===x.student.classId); return (c?c.name+' · ':'')+x.totalBooks+' kitap'; },
+    x => x.totalPages > 0 ? x.totalPages+' sayfa' : '— sayfa',
+    'Henüz veri yok.'
+  );
+
+  // 7. En çok okuyan sınıflar (kişi başı kitap)
+  const classStats = state.classes.map(c => {
+    const studs = state.students.filter(s=>s.classId===c.id);
+    if (!studs.length) return null;
+    const total = state.lendings.filter(l=>l.type==='give' && studs.find(s=>s.id===l.studentId)).length;
+    return { cls: c, total, count: studs.length, avg: parseFloat((total/studs.length).toFixed(1)) };
+  }).filter(Boolean).sort((a,b)=>b.avg-a.avg);
+  renderStatSection('topClasses', classStats,
+    x => x.cls.name,
+    x => x.count+' öğrenci · '+x.total+' kitap',
+    x => x.avg+' kitap/öğr.',
+    'Henüz veri yok.'
+  );
+
+  // En çok okuyan öğrenciler (kitap sayısına göre)
+  const topStudents = state.students.map(s => {
+    const total = state.lendings.filter(l=>l.type==='give' && l.studentId===s.id).length;
+    return { student: s, total };
+  }).filter(x=>x.total>0).sort((a,b)=>b.total-a.total);
+  renderStatSection('topStudents', topStudents,
+    x => x.student.name,
+    x => { const c = state.classes.find(c=>c.id===x.student.classId); return c?c.name:''; },
+    x => x.total+' kitap',
+    'Henüz veri yok.'
+  );
+
+  // En çok okuyan sınıflar (sayfa sayısına göre)
+  const classPageStats = state.classes.map(c => {
+    const studs = state.students.filter(s=>s.classId===c.id);
+    if (!studs.length) return null;
+    const lends = state.lendings.filter(l=>l.type==='give' && studs.find(s=>s.id===l.studentId));
+    const totalPages = lends.reduce((sum,l)=>sum+(state.books.find(b=>b.id===l.bookId)?.pages||0),0);
+    const avg = studs.length ? parseFloat((totalPages/studs.length).toFixed(0)) : 0;
+    return { cls: c, totalPages, count: studs.length, avg };
+  }).filter(x=>x&&x.totalPages>0).sort((a,b)=>b.avg-a.avg);
+  renderStatSection('topClassPages', classPageStats,
+    x => x.cls.name,
+    x => x.count+' öğrenci · '+x.totalPages+' sayfa',
+    x => x.avg+' sayfa/öğr.',
+    'Henüz sayfa verisi yok.'
+  );
+}
+
+// ═══════════════ MODAL HELPERS ═══════════════
+function openModal(id) {
+  document.getElementById(id).classList.add('open');
+  history.pushState({ level: 1 }, '');
+}
+function closeModal(id) {
+  document.getElementById(id).classList.remove('open');
+  if (id === 'modal-qr') stopCamera();
+}
+// Close on overlay click
+document.querySelectorAll('.modal-overlay').forEach(overlay => {
+  overlay.addEventListener('click', e => {
+    if (e.target === overlay) { overlay.classList.remove('open'); stopCamera(); }
+  });
+});
+
+// ═══════════════ CONFIRM ═══════════════
+let confirmCallback = null;
+function confirmAction(title, msg, cb) {
+  document.getElementById('confirmTitle').innerHTML = title + ' <button class="modal-close" onclick="closeModal(\'modal-confirm\')">✕</button>';
+  document.getElementById('confirmMsg').textContent = msg;
+  confirmCallback = cb;
+  document.getElementById('confirmOkBtn').onclick = () => { closeModal('modal-confirm'); cb(); };
+  openModal('modal-confirm');
+}
+
+// ═══════════════ GLOBAL SEARCH ═══════════════
+let istatistikTab = 'istatistik';
+function switchIstatistikTab(tab) {
+  istatistikTab = tab;
+  document.getElementById('itab-istatistik').classList.toggle('active', tab === 'istatistik');
+  document.getElementById('itab-arama').classList.toggle('active', tab === 'arama');
+  document.getElementById('itab-content-istatistik').style.display = tab === 'istatistik' ? 'block' : 'none';
+  document.getElementById('itab-content-arama').style.display = tab === 'arama' ? 'block' : 'none';
+  if (tab === 'istatistik') renderStats();
+}
+
+let searchTab = 'ogrenci';
+function switchSearchTab(tab) {
+  searchTab = tab;
+  document.getElementById('stab-ogrenci').classList.toggle('active', tab === 'ogrenci');
+  document.getElementById('stab-kitap').classList.toggle('active', tab === 'kitap');
+  renderGlobalSearch();
+}
+function renderGlobalSearch() {
+  const el = document.getElementById('globalSearchResults');
+  const q = document.getElementById('globalSearch').value.trim();
+  if (!q) {
+    el.innerHTML = `<div class="empty-state"><div class="empty-icon">🔍</div><p>Aramak istediğinizi yazın.</p></div>`;
+    return;
+  }
+  if (searchTab === 'ogrenci') {
+    const byName = smartSearch(state.students, q, s => s.name);
+    const byNo = smartSearch(state.students, q, s => s.no||'');
+    const seen = new Set();
+    const results = [...byName, ...byNo].filter(s => { if(seen.has(s.id)) return false; seen.add(s.id); return true; });
+    if (!results.length) { el.innerHTML = `<div class="empty-state"><div class="empty-icon">👤</div><p>Öğrenci bulunamadı.</p></div>`; return; }
+    el.innerHTML = `<div class="card">${results.map(s => {
+      const cls = state.classes.find(c => c.id === s.classId);
+      const activeLends = state.lendings.filter(l => l.studentId === s.id && !l.returnDate && l.type === 'give');
+      return `<div class="list-item" style="cursor:pointer" onclick="openStudentDetail('${s.id}')">
+        <div class="item-icon" style="background:#d1f0e8;border-radius:12px"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#0e9076" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg></div>
+        <div class="item-info">
+          <div class="item-title">${s.name}</div>
+          <div class="item-sub">${cls ? cls.name : ''}${s.no?' · No: '+s.no:''}</div>
+          ${activeLends.length ? `<div style="margin-top:4px"><span class="badge badge-orange">${activeLends.length} kitap zimmetinde</span></div>` : ''}
+        </div>
+        <span style="color:var(--text2);font-size:18px">›</span>
+      </div>`;
+    }).join('')}</div>`;
+  } else {
+    const byTitle = smartSearch(state.books, q, b => b.title);
+    const byAuthor = smartSearch(state.books, q, b => b.author||'');
+    const byIsbn = smartSearch(state.books, q, b => b.isbn||'');
+    const seen = new Set();
+    const results = [...byTitle, ...byAuthor, ...byIsbn].filter(b => { if(seen.has(b.id)) return false; seen.add(b.id); return true; });
+    if (!results.length) { el.innerHTML = `<div class="empty-state"><div class="empty-icon">📖</div><p>Kitap bulunamadı.</p></div>`; return; }
+    el.innerHTML = `<div class="card">${results.map(b => {
+      const lentCount = state.lendings.filter(l => l.bookId === b.id && !l.returnDate && l.type === 'give').length;
+      const avail = b.qty - lentCount;
+      const holders = state.lendings.filter(l => l.bookId === b.id && !l.returnDate && l.type === 'give').map(l => {
+        const s = state.students.find(st => st.id === l.studentId);
+        return s ? s.name : '?';
+      });
+      return `<div class="list-item">
+        <div class="item-icon" style="background:#d1f0e8;border-radius:12px"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#0e9076" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg></div>
+        <div class="item-info">
+          <div class="item-title">${b.title}</div>
+          <div class="item-sub">${b.author||'Yazar belirtilmedi'}${b.isbn?' · '+b.isbn:''}</div>
+          <div style="margin-top:4px"><span class="badge ${avail>0?'badge-green':'badge-red'}">${avail} mevcut / ${b.qty} toplam</span></div>
+          ${holders.length ? `<div class="item-sub" style="margin-top:4px">📤 ${holders.join(', ')}</div>` : ''}
+        </div>
+      </div>`;
+    }).join('')}</div>`;
+  }
+}
+
+// ═══════════════ TOAST ═══════════════
+function showToast(msg) {
+  let t = document.getElementById('toast');
+  if (!t) {
+    t = document.createElement('div');
+    t.id = 'toast';
+    t.style.cssText = 'position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:#1a3a5c;color:white;padding:12px 22px;border-radius:30px;font-size:13px;font-weight:700;z-index:999;box-shadow:0 4px 20px rgba(0,0,0,0.3);transition:opacity 0.4s';
+    document.body.appendChild(t);
+  }
+  t.textContent = msg;
+  t.style.opacity = '1';
+  clearTimeout(t._timer);
+  t._timer = setTimeout(() => { t.style.opacity = '0'; }, 2500);
+}
+</script>
+<!-- İÇE AKTAR MODAL -->
+<div class="modal-overlay" id="modal-import">
+  <div class="modal">
+    <div class="modal-title">📥 Verileri İçe Aktar <button class="modal-close" onclick="closeModal('modal-import')">✕</button></div>
+    <p style="font-size:13px;color:#888;margin-bottom:10px">Dışa aktardığınız JSON metnini aşağıya yapıştırın:</p>
+    <textarea id="importTextarea" style="width:100%;height:150px;border:1.5px solid #d0e8d8;border-radius:10px;padding:10px;font-family:'Nunito',sans-serif;font-size:12px;resize:none;outline:none" placeholder='{"classes":[...],"books":[...],...}'></textarea>
+    <div style="display:flex;gap:10px;margin-top:12px">
+      <button class="btn btn-ghost btn-full" onclick="closeModal('modal-import')">İptal</button>
+      <button class="btn btn-primary btn-full" onclick="importFromText()">Yükle</button>
+    </div>
+  </div>
+</div>
+
+<input type="file" id="bookCoverFileInput" accept="image/*" capture="environment" style="position:fixed;opacity:0;top:0;left:0;width:1px;height:1px" onchange="onCoverSelected(event)">
+</body>
+</html>
